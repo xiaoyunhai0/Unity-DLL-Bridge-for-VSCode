@@ -86,6 +86,22 @@ unity-dll-bridge/
 └─ samples/                # 示例外部 C# 工程和 Unity 工程
 ```
 
+开发环境和交付环境要明确分开：
+
+```text
+云端服务器 / 在线开发环境
+↓
+开发、测试、打包 VSCode 扩展
+↓
+推送源码到 GitHub
+↓
+手动创建 GitHub Release 并上传离线产物
+↓
+离线电脑只下载 Release 产物使用
+```
+
+离线使用者不需要从源码构建，也不需要运行 `npm install`。
+
 ### 4.1 VSCode 扩展
 
 VSCode 扩展是第一优先级，负责：
@@ -171,13 +187,14 @@ v0.1 必须做到：
 ### 6.2 离线电脑使用流程
 
 ```text
-1. VSCode -> Extensions -> Install from VSIX
-2. Unity 导入 unitypackage 或复制 Editor 插件目录
-3. 在工作区放置 dllbridge.json
-4. 配置 DLL 输出目录和 Unity 目标目录
-5. 执行 Validate Configuration
-6. 执行 Sync Only
-7. Unity 手动 Refresh
+1. 从 GitHub Release 下载 VSIX、模板和离线安装说明
+2. VSCode -> Extensions -> Install from VSIX
+3. Unity 导入 unitypackage 或复制 Editor 插件目录
+4. 在工作区放置 dllbridge.json
+5. 配置 DLL 输出目录和 Unity 目标目录
+6. 执行 Validate Configuration
+7. 执行 Sync Only
+8. Unity 手动 Refresh
 ```
 
 ### 6.3 关于“不用 CLI”
@@ -185,6 +202,36 @@ v0.1 必须做到：
 最终使用者不需要手动敲命令。
 
 允许工具内部在后续版本调用 MSBuild / dotnet / 自定义脚本，但产品入口必须是 VSCode 命令、按钮或菜单。
+
+开发者可以在云端服务器或在线环境使用 npm 进行构建和打包，但离线使用者只安装 GitHub Release 中的 `.vsix`。
+
+### 6.4 GitHub Release 交付流程
+
+v0.1 先采用本地打包、手动上传 Release 的方式：
+
+```text
+npm install
+npm run compile
+npm run package
+```
+
+Release 建议包含：
+
+```text
+UnityDllBridge-VSCode-0.1.0.vsix
+UnityDllBridge-Templates-0.1.0.zip
+README-offline-install.md
+checksums.txt
+```
+
+后续加入 Unity 插件后再补充：
+
+```text
+UnityDllBridge-UnityPlugin-0.1.0.zip
+UnityDllBridge-UnityPlugin-0.1.0.unitypackage
+```
+
+v0.1 不强制做 GitHub Actions 自动 Release。自动化发布可以放到 v0.2，在 MVP 稳定后再处理版本号、artifact 和 checksum。
 
 ## 7. 配置文件设计
 

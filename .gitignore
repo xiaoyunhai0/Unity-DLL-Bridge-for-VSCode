@@ -1,0 +1,9 @@
+node_modules/
+out/
+dist/
+releases/
+.dllbridge/
+*.vsix
+*.log
+*.tmp
+.DS_Store

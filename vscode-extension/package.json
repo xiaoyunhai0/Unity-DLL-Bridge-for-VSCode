@@ -1,0 +1,43 @@
+{
+  "name": "unity-dll-bridge",
+  "displayName": "Unity DLL Bridge",
+  "description": "Validate and sync external C# DLL outputs into Unity projects.",
+  "version": "0.1.0",
+  "publisher": "xiaoyunhai0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xiaoyunhai0/Unity-DLL-Bridge-for-VSCode.git",
+    "directory": "vscode-extension"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:unityDllBridge.validateConfiguration"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "unityDllBridge.validateConfiguration",
+        "title": "Unity DLL Bridge: Validate Configuration"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "node -e \"require('fs').mkdirSync('../releases',{recursive:true})\" && vsce package --out ../releases/UnityDllBridge-VSCode-0.1.0.vsix",
+    "release:local": "npm run compile && npm run package && node ../scripts/create-release-artifacts.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.24.0",
+    "typescript": "^5.4.5"
+  }
+}
