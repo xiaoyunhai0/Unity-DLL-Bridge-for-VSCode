@@ -11,6 +11,7 @@
 ```text
 UnityDllBridge-VSCode-0.1.0.vsix
 UnityDllBridge-Templates-0.1.0.zip
+UnityDllBridge-UnityPlugin-0.1.0.zip
 README-offline-install.md
 checksums.txt
 ```
@@ -34,6 +35,14 @@ checksums.txt
 7. 如需查看同步日志，执行 `Unity DLL Bridge: Open Sync Log`。
 8. 如需查看生成的 DLL 版本信息，执行 `Unity DLL Bridge: Open Manifest`。
 
+## 安装 Unity 插件
+
+1. 解压 `UnityDllBridge-UnityPlugin-0.1.0.zip`。
+2. 将其中的 `Assets/Editor/DllBridge/` 复制到 Unity 工程的 `Assets/Editor/DllBridge/`。
+3. 回到 Unity，等待脚本编译完成。
+4. 使用菜单 `Tools/DLL Bridge/Refresh` 手动刷新资源。
+5. 使用菜单 `Tools/DLL Bridge/Show Current DLL Info` 查看 `Assets/Plugins/**/manifest.json`。
+
 ## 注意事项
 
 - v0.1 只支持 `syncOnly`，不负责自动编译 C# Project。
@@ -41,3 +50,4 @@ checksums.txt
 - 默认不会复制 `.cs`、`.csproj`、`.sln` 等源码文件。
 - 同步日志写入当前工作区 `.dllbridge/logs/`，该目录不需要提交到 Git。
 - `manifest.json` 会写入 Unity 目标插件目录，用于记录当前 DLL、PDB、XML 和依赖 DLL 的 hash。
+- Unity 插件只放在 `Assets/Editor/DllBridge/`，不会进入运行时构建。

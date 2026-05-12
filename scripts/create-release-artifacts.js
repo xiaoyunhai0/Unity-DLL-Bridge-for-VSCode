@@ -5,6 +5,7 @@ const path = require('path');
 const repoRoot = path.resolve(__dirname, '..');
 const releaseDir = path.join(repoRoot, 'releases');
 const templateZip = path.join(releaseDir, 'UnityDllBridge-Templates-0.1.0.zip');
+const unityPluginZip = path.join(releaseDir, 'UnityDllBridge-UnityPlugin-0.1.0.zip');
 const offlineReadme = path.join(releaseDir, 'README-offline-install.md');
 const checksumsFile = path.join(releaseDir, 'checksums.txt');
 
@@ -12,6 +13,7 @@ const CRC_TABLE = createCrcTable();
 
 fs.mkdirSync(releaseDir, { recursive: true });
 createZipFromDirectory(path.join(repoRoot, 'templates'), templateZip);
+createZipFromDirectory(path.join(repoRoot, 'unity-plugin'), unityPluginZip);
 fs.copyFileSync(path.join(repoRoot, 'docs', 'offline-install.md'), offlineReadme);
 writeChecksums(releaseDir, checksumsFile);
 

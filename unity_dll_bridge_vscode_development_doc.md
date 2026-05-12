@@ -220,14 +220,14 @@ Release 建议包含：
 ```text
 UnityDllBridge-VSCode-0.1.0.vsix
 UnityDllBridge-Templates-0.1.0.zip
+UnityDllBridge-UnityPlugin-0.1.0.zip
 README-offline-install.md
 checksums.txt
 ```
 
-后续加入 Unity 插件后再补充：
+后续如果需要 `.unitypackage`，再补充：
 
 ```text
-UnityDllBridge-UnityPlugin-0.1.0.zip
 UnityDllBridge-UnityPlugin-0.1.0.unitypackage
 ```
 
@@ -547,6 +547,7 @@ Unity 插件第一版只提供：
 ```text
 Tools/DLL Bridge/Refresh
 Tools/DLL Bridge/Show Current DLL Info
+Tools/DLL Bridge/Open Plugins Folder
 ```
 
 刷新代码：
@@ -565,6 +566,14 @@ public static class DllBridgeMenu
     }
 }
 ```
+
+`Show Current DLL Info` 读取：
+
+```text
+Assets/Plugins/**/manifest.json
+```
+
+显示 DLL 名称、配置、同步时间、目标路径、源工程记录和文件 hash。Unity 插件只放在 `Assets/Editor/DllBridge/`，不进入运行时构建。
 
 ### 12.2 后续自动刷新
 
