@@ -24,6 +24,11 @@ export function registerStatusBar(context: vscode.ExtensionContext): StatusBarCo
           command: 'unityDllBridge.selectConfiguration'
         },
         {
+          label: 'Build & Sync',
+          description: '先构建外部 C# 工程，再同步 DLL',
+          command: 'unityDllBridge.buildAndSync'
+        },
+        {
           label: 'Validate Configuration',
           description: '检查 dllbridge.json 和路径配置',
           command: 'unityDllBridge.validateConfiguration'

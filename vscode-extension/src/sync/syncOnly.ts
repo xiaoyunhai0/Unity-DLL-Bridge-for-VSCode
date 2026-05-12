@@ -19,9 +19,9 @@ interface SyncedFile {
   size: number;
 }
 
-export async function syncOnly(resolvedConfig: ResolvedBridgeConfig, validationWarnings: string[]): Promise<SyncOnlyResult> {
+export async function syncOnly(resolvedConfig: ResolvedBridgeConfig, validationWarnings: string[], leadingLines: string[] = []): Promise<SyncOnlyResult> {
   const warnings = [...validationWarnings];
-  const lines: string[] = [];
+  const lines: string[] = [...leadingLines];
   const timestamp = new Date();
   const timestampForFileName = formatTimestampForFileName(timestamp);
 

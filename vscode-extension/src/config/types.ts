@@ -10,13 +10,22 @@ export interface BridgeConfig {
   name?: string;
   unityProject: string;
   defaultConfiguration: string;
-  build?: {
-    mode?: string;
-  };
+  build?: BridgeBuildConfig;
   privacy?: {
     hideAbsolutePathsInManifest?: boolean;
   };
   projects: BridgeProject[];
+}
+
+export interface BridgeBuildConfig {
+  mode?: 'syncOnly' | 'dotnet' | 'msbuild' | 'custom';
+  dotnetPath?: string;
+  msbuildPath?: string;
+  solutionPath?: string;
+  projectPath?: string;
+  command?: string;
+  args?: string[];
+  timeoutSeconds?: number;
 }
 
 export interface BridgeProject {

@@ -9,9 +9,18 @@ export interface ResolveConfigResult {
   resolvedConfig?: ResolvedBridgeConfig;
 }
 
-export async function resolveConfigForActiveConfiguration(context: vscode.ExtensionContext): Promise<ResolveConfigResult> {
+export interface ResolveConfigOptions {
+  requireArtifacts?: boolean;
+}
+
+export async function resolveConfigForActiveConfiguration(
+  context: vscode.ExtensionContext,
+  options: ResolveConfigOptions = {}
+): Promise<ResolveConfigResult> {
   const loadedConfig = await loadBridgeConfig();
-  const defaultValidation = await validateBridgeConfig(loadedConfig);
+  const defaultValidation = await validateBridgeConfig(loadedConfig, undefined, {
+    requireArtifacts: options.requireArtifacts
+  });
   const defaultResolvedConfig = getResolvedBridgeConfig(loadedConfig, defaultValidation);
 
   if (!defaultResolvedConfig) {
@@ -29,7 +38,9 @@ export async function resolveConfigForActiveConfiguration(context: vscode.Extens
     };
   }
 
-  const activeValidation = await validateBridgeConfig(loadedConfig, activeConfiguration);
+  const activeValidation = await validateBridgeConfig(loadedConfig, activeConfiguration, {
+    requireArtifacts: options.requireArtifacts
+  });
 
   return {
     validation: activeValidation,

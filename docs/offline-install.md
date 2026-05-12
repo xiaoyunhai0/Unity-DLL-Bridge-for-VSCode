@@ -32,9 +32,10 @@ checksums.txt
 4. 修改 `unityProject`、`outputDir`、`targetPluginPath` 和 `assemblyName`。
 5. 如需切换 Debug / Release，执行 `Unity DLL Bridge: Select Configuration`。
 6. 在 VSCode 命令面板执行 `Unity DLL Bridge: Validate Configuration`。
-7. 确认配置通过后，执行 `Unity DLL Bridge: Sync Only`。
-8. 如需查看同步日志，执行 `Unity DLL Bridge: Open Sync Log`。
-9. 如需查看生成的 DLL 版本信息，执行 `Unity DLL Bridge: Open Manifest`。
+7. 如果 DLL 已经由 Visual Studio 或内部工具编译好，执行 `Unity DLL Bridge: Sync Only`。
+8. 如果已配置 `build.mode` 为 `dotnet`、`msbuild` 或 `custom`，执行 `Unity DLL Bridge: Build & Sync`。
+9. 如需查看同步日志，执行 `Unity DLL Bridge: Open Sync Log`。
+10. 如需查看生成的 DLL 版本信息，执行 `Unity DLL Bridge: Open Manifest`。
 
 安装扩展后，VSCode 状态栏会显示 `DLL Bridge` 或 `DLL Bridge: Debug`，点击后可以选择常用操作。
 
@@ -48,8 +49,8 @@ checksums.txt
 
 ## 注意事项
 
-- v0.1 只支持 `syncOnly`，不负责自动编译 C# Project。
-- 请先使用 Visual Studio、Build Tools 或公司内部工具生成 DLL。
+- 默认使用 `syncOnly`，请先使用 Visual Studio、Build Tools 或公司内部工具生成 DLL。
+- 如需让扩展内部触发构建，可以配置 `build.mode` 为 `dotnet`、`msbuild` 或 `custom`。
 - 默认不会复制 `.cs`、`.csproj`、`.sln` 等源码文件。
 - 同步日志写入当前工作区 `.dllbridge/logs/`，该目录不需要提交到 Git。
 - `manifest.json` 会写入 Unity 目标插件目录，用于记录当前 DLL、PDB、XML 和依赖 DLL 的 hash。

@@ -4,7 +4,8 @@
   "unityProject": "../UnityClient",
   "defaultConfiguration": "Debug",
   "build": {
-    "mode": "syncOnly"
+    "mode": "syncOnly",
+    "timeoutSeconds": 120
   },
   "privacy": {
     "hideAbsolutePathsInManifest": true

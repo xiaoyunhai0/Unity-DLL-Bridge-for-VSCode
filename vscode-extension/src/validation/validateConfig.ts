@@ -3,7 +3,15 @@ import * as path from 'path';
 import { BridgeConfig, BridgeProject, BridgeProjectConfiguration, LoadedBridgeConfig, ResolvedBridgeConfig, ValidationResult } from '../config/types';
 import { isPlainObject, isStringArray, resolveConfigPath } from '../utils/pathUtils';
 
-export async function validateBridgeConfig(loaded: LoadedBridgeConfig, configurationOverride?: string): Promise<ValidationResult> {
+export interface ValidateBridgeConfigOptions {
+  requireArtifacts?: boolean;
+}
+
+export async function validateBridgeConfig(
+  loaded: LoadedBridgeConfig,
+  configurationOverride?: string,
+  options: ValidateBridgeConfigOptions = {}
+): Promise<ValidationResult> {
   const result: ValidationResult = {
     errors: [],
     warnings: []
@@ -15,7 +23,7 @@ export async function validateBridgeConfig(loaded: LoadedBridgeConfig, configura
     return result;
   }
 
-  await validatePaths(config, loaded.configDir, configurationOverride ?? config.defaultConfiguration, result);
+  await validatePaths(config, loaded.configDir, configurationOverride ?? config.defaultConfiguration, options.requireArtifacts ?? true, result);
 
   return result;
 }
@@ -62,7 +70,13 @@ function validateShape(value: unknown, result: ValidationResult): BridgeConfig |
   }
 
   if (isPlainObject(value.build) && value.build.mode !== undefined && value.build.mode !== 'syncOnly') {
-    result.warnings.push('v0.1 只实现 syncOnly。其他 build.mode 会在后续版本支持。');
+    if (!['dotnet', 'msbuild', 'custom'].includes(String(value.build.mode))) {
+      result.errors.push('build.mode 必须是 syncOnly / dotnet / msbuild / custom。');
+    }
+  }
+
+  if (isPlainObject(value.build) && value.build.args !== undefined && !isStringArray(value.build.args)) {
+    result.errors.push('build.args 必须是字符串数组。');
   }
 
   if (!isPlainObject(value.privacy) || value.privacy.hideAbsolutePathsInManifest !== true) {
@@ -118,7 +132,13 @@ function requireString(value: Record<string, unknown>, key: string, label: strin
   }
 }
 
-async function validatePaths(config: BridgeConfig, configDir: string, activeConfiguration: string, result: ValidationResult): Promise<void> {
+async function validatePaths(
+  config: BridgeConfig,
+  configDir: string,
+  activeConfiguration: string,
+  requireArtifacts: boolean,
+  result: ValidationResult
+): Promise<void> {
   const unityProjectPath = resolveConfigPath(configDir, config.unityProject);
   const unityAssetsPath = path.join(unityProjectPath, 'Assets');
 
@@ -131,7 +151,7 @@ async function validatePaths(config: BridgeConfig, configDir: string, activeConf
   }
 
   for (let index = 0; index < config.projects.length; index += 1) {
-    await validateProjectPaths(config.projects[index], index, activeConfiguration, configDir, unityAssetsPath, result);
+    await validateProjectPaths(config.projects[index], index, activeConfiguration, configDir, unityAssetsPath, requireArtifacts, result);
   }
 }
 
@@ -141,6 +161,7 @@ async function validateProjectPaths(
   activeConfiguration: string,
   configDir: string,
   unityAssetsPath: string,
+  requireArtifacts: boolean,
   result: ValidationResult
 ): Promise<void> {
   const prefix = `projects[${index}]`;
@@ -157,7 +178,7 @@ async function validateProjectPaths(
     result.errors.push(`${prefix}.targetPluginPath 必须位于 Unity 工程 Assets 目录内：${project.targetPluginPath}`);
   }
 
-  await validateConfigurationPaths(project, configuration, activeConfiguration, prefix, configDir, result);
+  await validateConfigurationPaths(project, configuration, activeConfiguration, prefix, configDir, requireArtifacts, result);
 }
 
 async function validateConfigurationPaths(
@@ -166,38 +187,43 @@ async function validateConfigurationPaths(
   configurationName: string,
   prefix: string,
   configDir: string,
+  requireArtifacts: boolean,
   result: ValidationResult
 ): Promise<void> {
   const outputDir = resolveConfigPath(configDir, configuration.outputDir);
 
   if (!(await directoryExists(outputDir))) {
-    result.errors.push(`${prefix}.configurations.${configurationName}.outputDir 不存在：${configuration.outputDir}`);
+    if (requireArtifacts) {
+      result.errors.push(`${prefix}.configurations.${configurationName}.outputDir 不存在：${configuration.outputDir}`);
+    }
     return;
   }
 
   const dllPath = path.join(outputDir, `${project.assemblyName}.dll`);
-  if (!(await fileExists(dllPath))) {
+  if (requireArtifacts && !(await fileExists(dllPath))) {
     result.errors.push(`没有找到主 DLL：${dllPath}`);
   }
 
-  if (configuration.copyPdb === true) {
+  if (requireArtifacts && configuration.copyPdb === true) {
     const pdbPath = path.join(outputDir, `${project.assemblyName}.pdb`);
     if (!(await fileExists(pdbPath))) {
       result.warnings.push(`配置要求复制 PDB，但文件不存在：${pdbPath}`);
     }
   }
 
-  if (configuration.copyXml === true) {
+  if (requireArtifacts && configuration.copyXml === true) {
     const xmlPath = path.join(outputDir, `${project.assemblyName}.xml`);
     if (!(await fileExists(xmlPath))) {
       result.warnings.push(`配置要求复制 XML，但文件不存在：${xmlPath}`);
     }
   }
 
-  for (const dependency of configuration.dependencies ?? []) {
-    const dependencyPath = resolveConfigPath(configDir, dependency);
-    if (!(await fileExists(dependencyPath))) {
-      result.warnings.push(`依赖 DLL 不存在：${dependency}`);
+  if (requireArtifacts) {
+    for (const dependency of configuration.dependencies ?? []) {
+      const dependencyPath = resolveConfigPath(configDir, dependency);
+      if (!(await fileExists(dependencyPath))) {
+        result.warnings.push(`依赖 DLL 不存在：${dependency}`);
+      }
     }
   }
 }
