@@ -52,7 +52,9 @@
       "unityDllBridge": [
         {
           "id": "unityDllBridge.actionsView",
-          "name": "工作台"
+          "name": "工作台",
+          "type": "webview",
+          "visibility": "visible"
         }
       ]
     },
