@@ -361,6 +361,18 @@ Unity DLL Bridge: Open Manifest
 Unity DLL Bridge: Open Sync Log
 ```
 
+`Sync Only` 行为：
+
+```text
+1. 复用 Validate Configuration。
+2. 如果存在阻断错误，取消同步。
+3. 创建 targetPluginPath。
+4. 复制 DLL/PDB/XML 和显式 dependencies。
+5. 如果 backupBeforeOverwrite=true，覆盖前备份旧文件。
+6. 在 targetPluginPath 写入 manifest.json。
+7. 在工作区 .dllbridge/logs/ 写入 latest.log 和时间戳日志。
+```
+
 v0.2 再提供：
 
 ```text
@@ -524,6 +536,7 @@ manifest 用途：
 - 人能读懂。
 - 错误信息要指向具体配置字段。
 - 后续可以被程序解析。
+- `.dllbridge/logs/` 是本地运行产物，不提交 Git。
 
 ## 12. Unity 插件设计
 

@@ -41,3 +41,10 @@ export interface ValidationResult {
   errors: string[];
   warnings: string[];
 }
+
+export interface ResolvedBridgeConfig {
+  configPath: string;
+  configDir: string;
+  workspaceRoot: string;
+  config: BridgeConfig;
+}

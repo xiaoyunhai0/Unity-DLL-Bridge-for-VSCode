@@ -1,6 +1,6 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { BridgeConfig, BridgeProject, BridgeProjectConfiguration, LoadedBridgeConfig, ValidationResult } from '../config/types';
+import { BridgeConfig, BridgeProject, BridgeProjectConfiguration, LoadedBridgeConfig, ResolvedBridgeConfig, ValidationResult } from '../config/types';
 import { isPlainObject, isStringArray, resolveConfigPath } from '../utils/pathUtils';
 
 export async function validateBridgeConfig(loaded: LoadedBridgeConfig): Promise<ValidationResult> {
@@ -18,6 +18,19 @@ export async function validateBridgeConfig(loaded: LoadedBridgeConfig): Promise<
   await validatePaths(config, loaded.configDir, result);
 
   return result;
+}
+
+export function getResolvedBridgeConfig(loaded: LoadedBridgeConfig, result: ValidationResult): ResolvedBridgeConfig | undefined {
+  if (result.errors.length > 0) {
+    return undefined;
+  }
+
+  return {
+    configPath: loaded.configPath,
+    configDir: loaded.configDir,
+    workspaceRoot: loaded.workspaceRoot,
+    config: loaded.config as BridgeConfig
+  };
 }
 
 function validateShape(value: unknown, result: ValidationResult): BridgeConfig | undefined {

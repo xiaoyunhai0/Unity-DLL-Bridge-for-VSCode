@@ -10,5 +10,7 @@ The first vertical slice implements:
 - `dllbridge.json` lookup
 - shape and path validation
 - clear error and warning messages
+- `Unity DLL Bridge: Sync Only`
+- manifest and sync log generation
 
 Runtime dependencies are intentionally kept at zero for offline-friendly VSIX distribution.

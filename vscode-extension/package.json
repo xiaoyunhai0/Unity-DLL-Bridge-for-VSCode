@@ -17,7 +17,10 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:unityDllBridge.validateConfiguration"
+    "onCommand:unityDllBridge.validateConfiguration",
+    "onCommand:unityDllBridge.syncOnly",
+    "onCommand:unityDllBridge.openSyncLog",
+    "onCommand:unityDllBridge.openManifest"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -25,6 +28,18 @@
       {
         "command": "unityDllBridge.validateConfiguration",
         "title": "Unity DLL Bridge: Validate Configuration"
+      },
+      {
+        "command": "unityDllBridge.syncOnly",
+        "title": "Unity DLL Bridge: Sync Only"
+      },
+      {
+        "command": "unityDllBridge.openSyncLog",
+        "title": "Unity DLL Bridge: Open Sync Log"
+      },
+      {
+        "command": "unityDllBridge.openManifest",
+        "title": "Unity DLL Bridge: Open Manifest"
       }
     ]
   },
