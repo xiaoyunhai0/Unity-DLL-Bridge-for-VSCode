@@ -16,6 +16,13 @@
   "categories": [
     "Other"
   ],
+  "keywords": [
+    "unity",
+    "dll",
+    "csharp",
+    "vscode",
+    "offline"
+  ],
   "activationEvents": [
     "onCommand:unityDllBridge.validateConfiguration",
     "onCommand:unityDllBridge.syncOnly",

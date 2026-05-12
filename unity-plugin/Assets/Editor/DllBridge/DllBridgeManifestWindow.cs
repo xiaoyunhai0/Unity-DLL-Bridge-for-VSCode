@@ -10,6 +10,9 @@ namespace UnityDllBridge.Editor
     {
         private readonly List<ManifestInfo> manifests = new List<ManifestInfo>();
         private Vector2 scrollPosition;
+        private GUIStyle titleStyle;
+        private GUIStyle mutedStyle;
+        private GUIStyle pillStyle;
 
         public static void ShowWindow()
         {
@@ -26,6 +29,21 @@ namespace UnityDllBridge.Editor
 
         private void OnGUI()
         {
+            EnsureStyles();
+            DrawToolbar();
+            DrawHeader();
+
+            if (manifests.Count == 0)
+            {
+                DrawEmptyState();
+                return;
+            }
+
+            DrawManifestList();
+        }
+
+        private void DrawToolbar()
+        {
             using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
             {
                 if (GUILayout.Button("Refresh", EditorStyles.toolbarButton, GUILayout.Width(80)))
@@ -34,15 +52,56 @@ namespace UnityDllBridge.Editor
                 }
 
                 GUILayout.FlexibleSpace();
-                GUILayout.Label("manifest.json", EditorStyles.miniLabel);
-            }
 
-            if (manifests.Count == 0)
+                if (GUILayout.Button("Open Plugins", EditorStyles.toolbarButton, GUILayout.Width(96)))
+                {
+                    DllBridgeMenu.OpenPluginsFolder();
+                }
+            }
+        }
+
+        private void DrawHeader()
+        {
+            EditorGUILayout.Space(10);
+            EditorGUILayout.LabelField("DLL Bridge Manifests", titleStyle);
+            EditorGUILayout.LabelField("Read synced DLL metadata from Assets/Plugins/**/manifest.json.", mutedStyle);
+            EditorGUILayout.Space(8);
+
+            using (new EditorGUILayout.HorizontalScope())
             {
-                EditorGUILayout.HelpBox("No DLL Bridge manifest.json files were found under Assets/Plugins.", MessageType.Info);
-                return;
+                DrawSummary("Manifests", manifests.Count.ToString());
+                DrawSummary("Files", CountFiles().ToString());
+                DrawSummary("Errors", CountErrors().ToString());
             }
 
+            EditorGUILayout.Space(8);
+        }
+
+        private void DrawEmptyState()
+        {
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("No manifest files found", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Run Unity DLL Bridge: Sync Only or Build & Sync in VSCode, then refresh this window.", mutedStyle);
+            EditorGUILayout.Space(8);
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("Refresh", GUILayout.Width(120)))
+                {
+                    RefreshManifestList();
+                }
+
+                if (GUILayout.Button("Open Plugins Folder", GUILayout.Width(160)))
+                {
+                    DllBridgeMenu.OpenPluginsFolder();
+                }
+            }
+
+            EditorGUILayout.EndVertical();
+        }
+
+        private void DrawManifestList()
+        {
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
 
             foreach (var manifest in manifests)
@@ -73,10 +132,18 @@ namespace UnityDllBridge.Editor
             Repaint();
         }
 
-        private static void DrawManifest(ManifestInfo manifest)
+        private void DrawManifest(ManifestInfo manifest)
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField(manifest.DisplayName, EditorStyles.boldLabel);
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.LabelField(manifest.DisplayName, EditorStyles.boldLabel);
+                GUILayout.FlexibleSpace();
+                GUILayout.Label(string.IsNullOrEmpty(manifest.Configuration) ? "Unknown" : manifest.Configuration, pillStyle);
+            }
+
+            EditorGUILayout.Space(2);
             DrawValue("Path", manifest.AssetRelativePath);
             DrawValue("Configuration", manifest.Configuration);
             DrawValue("Sync Time", manifest.SyncTime);
@@ -88,14 +155,39 @@ namespace UnityDllBridge.Editor
                 EditorGUILayout.HelpBox(manifest.Error, MessageType.Warning);
             }
 
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("Open Manifest", GUILayout.Width(120)))
+                {
+                    OpenFile(manifest.FullPath);
+                }
+
+                if (GUILayout.Button("Reveal", GUILayout.Width(80)))
+                {
+                    EditorUtility.RevealInFinder(manifest.FullPath);
+                }
+            }
+
             if (manifest.Files.Count > 0)
             {
                 EditorGUILayout.Space(4);
                 EditorGUILayout.LabelField("Files", EditorStyles.boldLabel);
 
+                using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
+                {
+                    GUILayout.Label("Name", GUILayout.MinWidth(160));
+                    GUILayout.Label("Size", GUILayout.Width(90));
+                    GUILayout.Label("SHA256", GUILayout.MinWidth(120));
+                }
+
                 foreach (var file in manifest.Files)
                 {
-                    DrawValue(file.Name, string.Format("{0} bytes  {1}", file.Size, ShortHash(file.Sha256)));
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        EditorGUILayout.SelectableLabel(file.Name, GUILayout.MinWidth(160), GUILayout.Height(EditorGUIUtility.singleLineHeight));
+                        EditorGUILayout.SelectableLabel(FormatBytes(file.Size), GUILayout.Width(90), GUILayout.Height(EditorGUIUtility.singleLineHeight));
+                        EditorGUILayout.SelectableLabel(ShortHash(file.Sha256), GUILayout.MinWidth(120), GUILayout.Height(EditorGUIUtility.singleLineHeight));
+                    }
                 }
             }
 
@@ -111,6 +203,76 @@ namespace UnityDllBridge.Editor
             EditorGUILayout.EndHorizontal();
         }
 
+        private void DrawSummary(string label, string value)
+        {
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.MinWidth(120));
+            EditorGUILayout.LabelField(label, mutedStyle);
+            EditorGUILayout.LabelField(value, EditorStyles.boldLabel);
+            EditorGUILayout.EndVertical();
+        }
+
+        private void EnsureStyles()
+        {
+            if (titleStyle != null)
+            {
+                return;
+            }
+
+            titleStyle = new GUIStyle(EditorStyles.boldLabel)
+            {
+                fontSize = 16
+            };
+
+            mutedStyle = new GUIStyle(EditorStyles.miniLabel)
+            {
+                wordWrap = true
+            };
+
+            pillStyle = new GUIStyle(EditorStyles.miniButton)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fixedWidth = 76
+            };
+        }
+
+        private int CountFiles()
+        {
+            var count = 0;
+
+            foreach (var manifest in manifests)
+            {
+                count += manifest.Files.Count;
+            }
+
+            return count;
+        }
+
+        private int CountErrors()
+        {
+            var count = 0;
+
+            foreach (var manifest in manifests)
+            {
+                if (!string.IsNullOrEmpty(manifest.Error))
+                {
+                    count += 1;
+                }
+            }
+
+            return count;
+        }
+
+        private static void OpenFile(string path)
+        {
+            if (!File.Exists(path))
+            {
+                EditorUtility.DisplayDialog("DLL Bridge", "Manifest file does not exist.", "OK");
+                return;
+            }
+
+            EditorUtility.OpenWithDefaultApp(path);
+        }
+
         private static string ShortHash(string hash)
         {
             if (string.IsNullOrEmpty(hash))
@@ -119,6 +281,21 @@ namespace UnityDllBridge.Editor
             }
 
             return hash.Length <= 12 ? hash : hash.Substring(0, 12);
+        }
+
+        private static string FormatBytes(long bytes)
+        {
+            if (bytes < 1024)
+            {
+                return bytes + " B";
+            }
+
+            if (bytes < 1024 * 1024)
+            {
+                return (bytes / 1024f).ToString("0.0") + " KB";
+            }
+
+            return (bytes / 1024f / 1024f).ToString("0.0") + " MB";
         }
 
         [Serializable]
@@ -150,12 +327,14 @@ namespace UnityDllBridge.Editor
             public string SourceProject;
             public string TargetPath;
             public string Error;
+            public string FullPath;
             public readonly List<ManifestFile> Files = new List<ManifestFile>();
 
             public static ManifestInfo Load(string manifestPath)
             {
                 var info = new ManifestInfo
                 {
+                    FullPath = manifestPath,
                     AssetRelativePath = ToAssetRelativePath(manifestPath)
                 };
 

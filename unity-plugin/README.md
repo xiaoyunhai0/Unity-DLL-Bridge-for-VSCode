@@ -16,4 +16,19 @@ Assets/Editor/DllBridge/
 - `Tools/DLL Bridge/Show Current DLL Info`
 - `Tools/DLL Bridge/Open Plugins Folder`
 
+## Manifest Window
+
+`Show Current DLL Info` opens an Editor window that scans:
+
+```text
+Assets/Plugins/**/manifest.json
+```
+
+The window shows:
+
+- manifest count, file count, and parse errors
+- DLL name, configuration, sync time, source project, and target path
+- file size and SHA256 short hash
+- buttons to open or reveal a manifest file
+
 The plugin only runs in the Unity Editor. It does not add runtime code to builds.
