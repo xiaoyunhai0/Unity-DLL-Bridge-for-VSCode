@@ -183,12 +183,14 @@ Runtime dependencies are intentionally kept at zero for offline-friendly VSIX di
 Release packages usually include:
 
 ```text
-UnityDllBridge-VSCode-0.1.0.vsix
-UnityDllBridge-Templates-0.1.0.zip
-UnityDllBridge-UnityPlugin-0.1.0.zip
+UnityDllBridge-VSCode-<version>.vsix
+UnityDllBridge-Templates-<version>.zip
+UnityDllBridge-UnityPlugin-<version>.zip
 README-offline-install.md
 checksums.txt
 ```
+
+`<version>` is the published release version shown on GitHub Releases.
 
 ## Safety
 

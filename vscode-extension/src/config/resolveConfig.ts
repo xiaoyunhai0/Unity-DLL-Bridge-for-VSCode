@@ -18,25 +18,18 @@ export async function resolveConfigForActiveConfiguration(
   options: ResolveConfigOptions = {}
 ): Promise<ResolveConfigResult> {
   const loadedConfig = await loadBridgeConfig();
-  const defaultValidation = await validateBridgeConfig(loadedConfig, undefined, {
-    requireArtifacts: options.requireArtifacts
+  const shapeValidation = await validateBridgeConfig(loadedConfig, undefined, {
+    requireArtifacts: false
   });
-  const defaultResolvedConfig = getResolvedBridgeConfig(loadedConfig, defaultValidation);
+  const shapeResolvedConfig = getResolvedBridgeConfig(loadedConfig, shapeValidation);
 
-  if (!defaultResolvedConfig) {
+  if (!shapeResolvedConfig) {
     return {
-      validation: defaultValidation
+      validation: shapeValidation
     };
   }
 
-  const activeConfiguration = getActiveConfiguration(context, defaultResolvedConfig.config);
-
-  if (activeConfiguration === defaultResolvedConfig.config.defaultConfiguration) {
-    return {
-      validation: defaultValidation,
-      resolvedConfig: defaultResolvedConfig
-    };
-  }
+  const activeConfiguration = getActiveConfiguration(context, shapeResolvedConfig.config);
 
   const activeValidation = await validateBridgeConfig(loadedConfig, activeConfiguration, {
     requireArtifacts: options.requireArtifacts

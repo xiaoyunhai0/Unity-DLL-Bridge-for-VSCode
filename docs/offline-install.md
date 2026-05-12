@@ -9,12 +9,14 @@
 ## v0.1 Release 产物
 
 ```text
-UnityDllBridge-VSCode-0.1.0.vsix
-UnityDllBridge-Templates-0.1.0.zip
-UnityDllBridge-UnityPlugin-0.1.0.zip
+UnityDllBridge-VSCode-<version>.vsix
+UnityDllBridge-Templates-<version>.zip
+UnityDllBridge-UnityPlugin-<version>.zip
 README-offline-install.md
 checksums.txt
 ```
+
+`<version>` 代表当前发布版本，实际文件名以 GitHub Release 中上传的文件为准。
 
 ## 安装 VSCode 扩展
 
@@ -22,7 +24,7 @@ checksums.txt
 2. 打开 Extensions 面板。
 3. 点击右上角 `...`。
 4. 选择 `Install from VSIX...`。
-5. 选择 `UnityDllBridge-VSCode-0.1.0.vsix`。
+5. 选择 `UnityDllBridge-VSCode-<version>.vsix`。
 
 ## 配置项目
 
@@ -41,7 +43,7 @@ checksums.txt
 
 ## 安装 Unity 插件
 
-1. 解压 `UnityDllBridge-UnityPlugin-0.1.0.zip`。
+1. 解压 `UnityDllBridge-UnityPlugin-<version>.zip`。
 2. 将其中的 `Assets/Editor/DllBridge/` 复制到 Unity 工程的 `Assets/Editor/DllBridge/`。
 3. 回到 Unity，等待脚本编译完成。
 4. 使用菜单 `Tools/DLL Bridge/Refresh` 手动刷新资源。

@@ -8,7 +8,9 @@ import { resolveConfigPath } from '../utils/pathUtils';
 export function registerOpenManifestCommand(context: vscode.ExtensionContext): void {
   const disposable = vscode.commands.registerCommand('unityDllBridge.openManifest', async () => {
     try {
-      const { resolvedConfig } = await resolveConfigForActiveConfiguration(context);
+      const { resolvedConfig } = await resolveConfigForActiveConfiguration(context, {
+        requireArtifacts: false
+      });
 
       if (!resolvedConfig) {
         vscode.window.showErrorMessage('无法打开 manifest：配置校验失败。');

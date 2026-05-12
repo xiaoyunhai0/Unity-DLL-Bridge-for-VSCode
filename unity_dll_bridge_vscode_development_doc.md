@@ -218,17 +218,19 @@ npm run package
 Release 建议包含：
 
 ```text
-UnityDllBridge-VSCode-0.1.0.vsix
-UnityDllBridge-Templates-0.1.0.zip
-UnityDllBridge-UnityPlugin-0.1.0.zip
+UnityDllBridge-VSCode-<version>.vsix
+UnityDllBridge-Templates-<version>.zip
+UnityDllBridge-UnityPlugin-<version>.zip
 README-offline-install.md
 checksums.txt
 ```
 
+`<version>` 表示当前发布版本，实际文件名由 `vscode-extension/package.json` 的 `version` 生成。
+
 后续如果需要 `.unitypackage`，再补充：
 
 ```text
-UnityDllBridge-UnityPlugin-0.1.0.unitypackage
+UnityDllBridge-UnityPlugin-<version>.unitypackage
 ```
 
 v0.1 不强制做 GitHub Actions 自动 Release。自动化发布可以放到 v0.2，在 MVP 稳定后再处理版本号、artifact 和 checksum。

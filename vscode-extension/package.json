@@ -24,6 +24,8 @@
     "offline"
   ],
   "activationEvents": [
+    "workspaceContains:dllbridge.json",
+    "workspaceContains:.dllbridge/dllbridge.json",
     "onCommand:unityDllBridge.validateConfiguration",
     "onCommand:unityDllBridge.syncOnly",
     "onCommand:unityDllBridge.openSyncLog",
@@ -68,7 +70,7 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "package": "node -e \"require('fs').mkdirSync('../releases',{recursive:true})\" && vsce package --out ../releases/UnityDllBridge-VSCode-0.1.0.vsix",
+    "package": "node ../scripts/package-extension.js",
     "release:local": "npm run compile && npm run package && node ../scripts/create-release-artifacts.js"
   },
   "devDependencies": {

@@ -72,7 +72,9 @@ export function registerStatusBar(context: vscode.ExtensionContext): StatusBarCo
 async function refreshStatusBar(context: vscode.ExtensionContext, item: vscode.StatusBarItem): Promise<void> {
   try {
     const loadedConfig = await loadBridgeConfig();
-    const validation = await validateBridgeConfig(loadedConfig);
+    const validation = await validateBridgeConfig(loadedConfig, undefined, {
+      requireArtifacts: false
+    });
     const resolvedConfig = getResolvedBridgeConfig(loadedConfig, validation);
     if (!resolvedConfig) {
       item.text = 'DLL Bridge';

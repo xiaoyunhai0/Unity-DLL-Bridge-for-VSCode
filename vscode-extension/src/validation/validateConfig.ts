@@ -19,7 +19,7 @@ export async function validateBridgeConfig(
 
   const config = validateShape(loaded.config, result);
 
-  if (!config) {
+  if (!config || result.errors.length > 0) {
     return result;
   }
 
@@ -69,14 +69,12 @@ function validateShape(value: unknown, result: ValidationResult): BridgeConfig |
     validateProjectShape(value.projects[index], index, result);
   }
 
-  if (isPlainObject(value.build) && value.build.mode !== undefined && value.build.mode !== 'syncOnly') {
-    if (!['dotnet', 'msbuild', 'custom'].includes(String(value.build.mode))) {
-      result.errors.push('build.mode 必须是 syncOnly / dotnet / msbuild / custom。');
+  if (value.build !== undefined) {
+    if (!isPlainObject(value.build)) {
+      result.errors.push('build 必须是 JSON object。');
+    } else {
+      validateBuildShape(value.build, result);
     }
-  }
-
-  if (isPlainObject(value.build) && value.build.args !== undefined && !isStringArray(value.build.args)) {
-    result.errors.push('build.args 必须是字符串数组。');
   }
 
   if (!isPlainObject(value.privacy) || value.privacy.hideAbsolutePathsInManifest !== true) {
@@ -96,7 +94,9 @@ function validateProjectShape(value: unknown, index: number, result: ValidationR
 
   requireString(value, 'id', `${prefix}.id`, result);
   requireString(value, 'name', `${prefix}.name`, result);
-  requireString(value, 'assemblyName', `${prefix}.assemblyName`, result);
+  if (requireString(value, 'assemblyName', `${prefix}.assemblyName`, result)) {
+    validateAssemblyName(value.assemblyName as string, `${prefix}.assemblyName`, result);
+  }
   requireString(value, 'targetPluginPath', `${prefix}.targetPluginPath`, result);
 
   if (value.allowSourceCopy === true) {
@@ -121,14 +121,73 @@ function validateConfigurationShape(value: unknown, prefix: string, result: Vali
 
   requireString(value, 'outputDir', `${prefix}.outputDir`, result);
 
-  if (value.dependencies !== undefined && !isStringArray(value.dependencies)) {
-    result.errors.push(`${prefix}.dependencies 必须是字符串数组。`);
+  if (value.dependencies !== undefined) {
+    if (!isStringArray(value.dependencies)) {
+      result.errors.push(`${prefix}.dependencies 必须是字符串数组。`);
+    } else {
+      for (let index = 0; index < value.dependencies.length; index += 1) {
+        validateDependencyPath(value.dependencies[index], `${prefix}.dependencies[${index}]`, result);
+      }
+    }
   }
 }
 
-function requireString(value: Record<string, unknown>, key: string, label: string, result: ValidationResult): void {
+function validateBuildShape(value: Record<string, unknown>, result: ValidationResult): void {
+  const mode = value.mode ?? 'syncOnly';
+
+  if (typeof mode !== 'string' || !['syncOnly', 'dotnet', 'msbuild', 'custom'].includes(mode)) {
+    result.errors.push('build.mode 必须是 syncOnly / dotnet / msbuild / custom。');
+  }
+
+  validateOptionalString(value, 'dotnetPath', 'build.dotnetPath', result);
+  validateOptionalString(value, 'msbuildPath', 'build.msbuildPath', result);
+  validateOptionalString(value, 'solutionPath', 'build.solutionPath', result);
+  validateOptionalString(value, 'projectPath', 'build.projectPath', result);
+  validateOptionalString(value, 'command', 'build.command', result);
+
+  if (mode === 'custom' && (typeof value.command !== 'string' || value.command.trim() === '')) {
+    result.errors.push('build.mode 为 custom 时，build.command 必须是非空字符串。');
+  }
+
+  if (value.args !== undefined && !isStringArray(value.args)) {
+    result.errors.push('build.args 必须是字符串数组。');
+  }
+
+  if (value.timeoutSeconds !== undefined && (!Number.isFinite(value.timeoutSeconds) || Number(value.timeoutSeconds) <= 0)) {
+    result.errors.push('build.timeoutSeconds 必须是大于 0 的数字。');
+  }
+}
+
+function validateOptionalString(value: Record<string, unknown>, key: string, label: string, result: ValidationResult): void {
+  if (value[key] !== undefined && (typeof value[key] !== 'string' || (value[key] as string).trim() === '')) {
+    result.errors.push(`${label} 必须是非空字符串。`);
+  }
+}
+
+function requireString(value: Record<string, unknown>, key: string, label: string, result: ValidationResult): boolean {
   if (typeof value[key] !== 'string' || value[key].trim() === '') {
     result.errors.push(`${label} 必须是非空字符串。`);
+    return false;
+  }
+
+  return true;
+}
+
+function validateAssemblyName(value: string, label: string, result: ValidationResult): void {
+  if (value.includes('/') || value.includes('\\') || value.toLowerCase().endsWith('.dll')) {
+    result.errors.push(`${label} 只能填写程序集名，例如 GameLogic；不要包含路径或 .dll 后缀。`);
+  }
+}
+
+function validateDependencyPath(value: string, label: string, result: ValidationResult): void {
+  if (value.trim() === '') {
+    result.errors.push(`${label} 必须是非空字符串。`);
+    return;
+  }
+
+  const extension = path.extname(value).toLowerCase();
+  if (extension !== '.dll') {
+    result.errors.push(`${label} 只能配置 .dll 文件，不能复制源码或工程文件：${value}`);
   }
 }
 
@@ -141,6 +200,7 @@ async function validatePaths(
 ): Promise<void> {
   const unityProjectPath = resolveConfigPath(configDir, config.unityProject);
   const unityAssetsPath = path.join(unityProjectPath, 'Assets');
+  const unityPluginsPath = path.join(unityAssetsPath, 'Plugins');
 
   if (!(await directoryExists(unityProjectPath))) {
     result.errors.push(`unityProject 不存在：${config.unityProject}`);
@@ -151,7 +211,7 @@ async function validatePaths(
   }
 
   for (let index = 0; index < config.projects.length; index += 1) {
-    await validateProjectPaths(config.projects[index], index, activeConfiguration, configDir, unityAssetsPath, requireArtifacts, result);
+    await validateProjectPaths(config.projects[index], index, activeConfiguration, configDir, unityAssetsPath, unityPluginsPath, requireArtifacts, result);
   }
 }
 
@@ -161,6 +221,7 @@ async function validateProjectPaths(
   activeConfiguration: string,
   configDir: string,
   unityAssetsPath: string,
+  unityPluginsPath: string,
   requireArtifacts: boolean,
   result: ValidationResult
 ): Promise<void> {
@@ -176,6 +237,8 @@ async function validateProjectPaths(
 
   if (!isInsideOrEqual(unityAssetsPath, targetPluginPath)) {
     result.errors.push(`${prefix}.targetPluginPath 必须位于 Unity 工程 Assets 目录内：${project.targetPluginPath}`);
+  } else if (!isInsideOrEqual(unityPluginsPath, targetPluginPath)) {
+    result.warnings.push(`${prefix}.targetPluginPath 建议位于 Assets/Plugins 目录内，Unity 插件默认扫描该目录：${project.targetPluginPath}`);
   }
 
   await validateConfigurationPaths(project, configuration, activeConfiguration, prefix, configDir, requireArtifacts, result);

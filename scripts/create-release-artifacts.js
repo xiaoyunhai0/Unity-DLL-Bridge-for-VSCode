@@ -3,19 +3,48 @@ const fs = require('fs');
 const path = require('path');
 
 const repoRoot = path.resolve(__dirname, '..');
+const extensionPackage = require(path.join(repoRoot, 'vscode-extension', 'package.json'));
+const version = extensionPackage.version;
 const releaseDir = path.join(repoRoot, 'releases');
-const templateZip = path.join(releaseDir, 'UnityDllBridge-Templates-0.1.0.zip');
-const unityPluginZip = path.join(releaseDir, 'UnityDllBridge-UnityPlugin-0.1.0.zip');
+const templateZip = path.join(releaseDir, `UnityDllBridge-Templates-${version}.zip`);
+const unityPluginZip = path.join(releaseDir, `UnityDllBridge-UnityPlugin-${version}.zip`);
 const offlineReadme = path.join(releaseDir, 'README-offline-install.md');
 const checksumsFile = path.join(releaseDir, 'checksums.txt');
 
 const CRC_TABLE = createCrcTable();
 
 fs.mkdirSync(releaseDir, { recursive: true });
+removeOldReleaseFiles(releaseDir, version);
 createZipFromDirectory(path.join(repoRoot, 'templates'), templateZip);
 createZipFromDirectory(path.join(repoRoot, 'unity-plugin'), unityPluginZip);
-fs.copyFileSync(path.join(repoRoot, 'docs', 'offline-install.md'), offlineReadme);
+writeVersionedOfflineReadme(path.join(repoRoot, 'docs', 'offline-install.md'), offlineReadme, version);
+removeFileIfExists(path.join(releaseDir, '.extension-version'));
 writeChecksums(releaseDir, checksumsFile);
+
+function removeOldReleaseFiles(directory, currentVersion) {
+  const releaseFilePattern = /^UnityDllBridge-(VSCode|Templates|UnityPlugin)-.+\.(vsix|zip)$/;
+
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    if (!entry.isFile() || !releaseFilePattern.test(entry.name)) {
+      continue;
+    }
+
+    if (!entry.name.includes(`-${currentVersion}.`)) {
+      fs.unlinkSync(path.join(directory, entry.name));
+    }
+  }
+}
+
+function removeFileIfExists(filePath) {
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
+}
+
+function writeVersionedOfflineReadme(sourcePath, outputPath, releaseVersion) {
+  const content = fs.readFileSync(sourcePath, 'utf8').replace(/<version>/g, releaseVersion);
+  fs.writeFileSync(outputPath, content, 'utf8');
+}
 
 function createZipFromDirectory(sourceDir, zipPath) {
   const files = listFiles(sourceDir).map((filePath) => ({

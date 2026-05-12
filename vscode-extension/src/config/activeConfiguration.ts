@@ -18,17 +18,25 @@ export async function setActiveConfiguration(context: vscode.ExtensionContext, c
 }
 
 export function getConfigurationNames(config: BridgeConfig): string[] {
-  const names = new Set<string>();
+  const [firstProject, ...remainingProjects] = config.projects;
 
-  for (const project of config.projects) {
-    for (const name of Object.keys(project.configurations)) {
-      names.add(name);
+  if (!firstProject) {
+    return [];
+  }
+
+  const sharedNames = new Set(Object.keys(firstProject.configurations));
+
+  for (const project of remainingProjects) {
+    for (const name of [...sharedNames]) {
+      if (!Object.prototype.hasOwnProperty.call(project.configurations, name)) {
+        sharedNames.delete(name);
+      }
     }
   }
 
-  return [...names].sort((left, right) => left.localeCompare(right));
+  return [...sharedNames].sort((left, right) => left.localeCompare(right));
 }
 
 function hasConfiguration(config: BridgeConfig, configuration: string): boolean {
-  return config.projects.some((project) => Object.prototype.hasOwnProperty.call(project.configurations, configuration));
+  return config.projects.every((project) => Object.prototype.hasOwnProperty.call(project.configurations, configuration));
 }

@@ -7,7 +7,9 @@ export function registerSelectConfigurationCommand(context: vscode.ExtensionCont
   const disposable = vscode.commands.registerCommand('unityDllBridge.selectConfiguration', async () => {
     try {
       const loadedConfig = await loadBridgeConfig();
-      const validation = await validateBridgeConfig(loadedConfig);
+      const validation = await validateBridgeConfig(loadedConfig, undefined, {
+        requireArtifacts: false
+      });
       const resolvedConfig = getResolvedBridgeConfig(loadedConfig, validation);
 
       if (!resolvedConfig) {
@@ -15,9 +17,15 @@ export function registerSelectConfigurationCommand(context: vscode.ExtensionCont
         return;
       }
 
+      const configurationNames = getConfigurationNames(resolvedConfig.config);
+      if (configurationNames.length === 0) {
+        vscode.window.showErrorMessage('无法选择配置：所有 projects 必须至少共享一个配置名，例如 Debug 或 Release。');
+        return;
+      }
+
       const activeConfiguration = getActiveConfiguration(context, resolvedConfig.config);
       const selected = await vscode.window.showQuickPick(
-        getConfigurationNames(resolvedConfig.config).map((configuration) => ({
+        configurationNames.map((configuration) => ({
           label: configuration,
           description: configuration === activeConfiguration ? '当前配置' : undefined
         })),

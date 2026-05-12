@@ -100,14 +100,27 @@ async function collectFilesToCopy(
 
   for (const dependency of configuration.dependencies ?? []) {
     const dependencyPath = resolveConfigPath(configDir, dependency);
-    if (await fileExists(dependencyPath)) {
-      files.push({
-        sourcePath: dependencyPath,
-        name: path.basename(dependencyPath)
-      });
-    } else {
-      warnings.push(`依赖 DLL 不存在，已跳过：${dependency}`);
+
+    if (path.extname(dependencyPath).toLowerCase() !== '.dll') {
+      warnings.push(`依赖文件不是 DLL，已跳过：${dependency}`);
+      continue;
     }
+
+    if (!(await fileExists(dependencyPath))) {
+      warnings.push(`依赖 DLL 不存在，已跳过：${dependency}`);
+      continue;
+    }
+
+    const dependencyName = path.basename(dependencyPath);
+    if (files.some((file) => file.name.toLowerCase() === dependencyName.toLowerCase())) {
+      warnings.push(`依赖 DLL 文件名重复，已跳过：${dependency}`);
+      continue;
+    }
+
+    files.push({
+      sourcePath: dependencyPath,
+      name: dependencyName
+    });
   }
 
   return files;

@@ -57,7 +57,7 @@ Unity Editor 插件：
 从 GitHub Release 下载：
 
 ```text
-UnityDllBridge-VSCode-0.1.0.vsix
+UnityDllBridge-VSCode-<version>.vsix
 ```
 
 在 VSCode 中选择：
@@ -79,7 +79,7 @@ Unity DLL Bridge: Create Config Template
 也可以从 Release 的模板包中复制：
 
 ```text
-UnityDllBridge-Templates-0.1.0.zip
+UnityDllBridge-Templates-<version>.zip
 ```
 
 ### 3. 修改 dllbridge.json
@@ -202,7 +202,7 @@ Unity DLL Bridge: Open Manifest
 从 GitHub Release 下载：
 
 ```text
-UnityDllBridge-UnityPlugin-0.1.0.zip
+UnityDllBridge-UnityPlugin-<version>.zip
 ```
 
 解压后复制到 Unity 工程：
@@ -242,12 +242,14 @@ Unity 插件只位于 `Assets/Editor`，不会进入运行时构建。
 Release 产物：
 
 ```text
-UnityDllBridge-VSCode-0.1.0.vsix
-UnityDllBridge-Templates-0.1.0.zip
-UnityDllBridge-UnityPlugin-0.1.0.zip
+UnityDllBridge-VSCode-<version>.vsix
+UnityDllBridge-Templates-<version>.zip
+UnityDllBridge-UnityPlugin-<version>.zip
 README-offline-install.md
 checksums.txt
 ```
+
+`<version>` 代表当前发布版本，实际文件名以 GitHub Release 中上传的文件为准。
 
 详细步骤见 [docs/offline-install.md](docs/offline-install.md)。
 
