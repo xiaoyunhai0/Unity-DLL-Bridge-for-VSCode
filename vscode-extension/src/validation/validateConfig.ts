@@ -3,7 +3,7 @@ import * as path from 'path';
 import { BridgeConfig, BridgeProject, BridgeProjectConfiguration, LoadedBridgeConfig, ResolvedBridgeConfig, ValidationResult } from '../config/types';
 import { isPlainObject, isStringArray, resolveConfigPath } from '../utils/pathUtils';
 
-export async function validateBridgeConfig(loaded: LoadedBridgeConfig): Promise<ValidationResult> {
+export async function validateBridgeConfig(loaded: LoadedBridgeConfig, configurationOverride?: string): Promise<ValidationResult> {
   const result: ValidationResult = {
     errors: [],
     warnings: []
@@ -15,12 +15,12 @@ export async function validateBridgeConfig(loaded: LoadedBridgeConfig): Promise<
     return result;
   }
 
-  await validatePaths(config, loaded.configDir, result);
+  await validatePaths(config, loaded.configDir, configurationOverride ?? config.defaultConfiguration, result);
 
   return result;
 }
 
-export function getResolvedBridgeConfig(loaded: LoadedBridgeConfig, result: ValidationResult): ResolvedBridgeConfig | undefined {
+export function getResolvedBridgeConfig(loaded: LoadedBridgeConfig, result: ValidationResult, configurationOverride?: string): ResolvedBridgeConfig | undefined {
   if (result.errors.length > 0) {
     return undefined;
   }
@@ -29,7 +29,8 @@ export function getResolvedBridgeConfig(loaded: LoadedBridgeConfig, result: Vali
     configPath: loaded.configPath,
     configDir: loaded.configDir,
     workspaceRoot: loaded.workspaceRoot,
-    config: loaded.config as BridgeConfig
+    config: loaded.config as BridgeConfig,
+    activeConfiguration: configurationOverride ?? (loaded.config as BridgeConfig).defaultConfiguration
   };
 }
 
@@ -117,7 +118,7 @@ function requireString(value: Record<string, unknown>, key: string, label: strin
   }
 }
 
-async function validatePaths(config: BridgeConfig, configDir: string, result: ValidationResult): Promise<void> {
+async function validatePaths(config: BridgeConfig, configDir: string, activeConfiguration: string, result: ValidationResult): Promise<void> {
   const unityProjectPath = resolveConfigPath(configDir, config.unityProject);
   const unityAssetsPath = path.join(unityProjectPath, 'Assets');
 
@@ -130,23 +131,23 @@ async function validatePaths(config: BridgeConfig, configDir: string, result: Va
   }
 
   for (let index = 0; index < config.projects.length; index += 1) {
-    await validateProjectPaths(config.projects[index], index, config.defaultConfiguration, configDir, unityAssetsPath, result);
+    await validateProjectPaths(config.projects[index], index, activeConfiguration, configDir, unityAssetsPath, result);
   }
 }
 
 async function validateProjectPaths(
   project: BridgeProject,
   index: number,
-  defaultConfiguration: string,
+  activeConfiguration: string,
   configDir: string,
   unityAssetsPath: string,
   result: ValidationResult
 ): Promise<void> {
   const prefix = `projects[${index}]`;
-  const configuration = project.configurations?.[defaultConfiguration];
+  const configuration = project.configurations?.[activeConfiguration];
 
   if (!configuration) {
-    result.errors.push(`${prefix}.configurations 中不存在 defaultConfiguration：${defaultConfiguration}`);
+    result.errors.push(`${prefix}.configurations 中不存在当前配置：${activeConfiguration}`);
     return;
   }
 
@@ -156,7 +157,7 @@ async function validateProjectPaths(
     result.errors.push(`${prefix}.targetPluginPath 必须位于 Unity 工程 Assets 目录内：${project.targetPluginPath}`);
   }
 
-  await validateConfigurationPaths(project, configuration, defaultConfiguration, prefix, configDir, result);
+  await validateConfigurationPaths(project, configuration, activeConfiguration, prefix, configDir, result);
 }
 
 async function validateConfigurationPaths(

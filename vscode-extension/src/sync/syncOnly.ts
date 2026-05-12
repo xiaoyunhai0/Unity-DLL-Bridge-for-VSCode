@@ -27,12 +27,12 @@ export async function syncOnly(resolvedConfig: ResolvedBridgeConfig, validationW
 
   log(lines, `Load config: ${resolvedConfig.configPath}`);
   log(lines, 'Mode: syncOnly');
-  log(lines, `Configuration: ${resolvedConfig.config.defaultConfiguration}`);
+  log(lines, `Configuration: ${resolvedConfig.activeConfiguration}`);
 
   let syncedProjects = 0;
 
   for (const project of resolvedConfig.config.projects) {
-    const configuration = project.configurations[resolvedConfig.config.defaultConfiguration];
+    const configuration = project.configurations[resolvedConfig.activeConfiguration];
     const outputDir = resolveConfigPath(resolvedConfig.configDir, configuration.outputDir);
     const targetDir = resolveConfigPath(resolvedConfig.configDir, project.targetPluginPath);
     const filesToCopy = await collectFilesToCopy(project.assemblyName, outputDir, configuration, resolvedConfig.configDir, warnings);
@@ -164,7 +164,7 @@ async function writeManifest(
     manifestVersion: 1,
     name: projectName,
     assemblyName: `${assemblyName}.dll`,
-    configuration: resolvedConfig.config.defaultConfiguration,
+    configuration: resolvedConfig.activeConfiguration,
     syncTime: timestamp.toISOString(),
     sourceProject: manifestSourceProject,
     targetPath: getRelativePath(resolveConfigPath(resolvedConfig.configDir, resolvedConfig.config.unityProject), path.join(targetDir, `${assemblyName}.dll`)),

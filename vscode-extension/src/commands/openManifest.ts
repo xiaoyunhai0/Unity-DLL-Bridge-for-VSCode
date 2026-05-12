@@ -1,17 +1,14 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { loadBridgeConfig } from '../config/loadConfig';
+import { resolveConfigForActiveConfiguration } from '../config/resolveConfig';
 import { BridgeProject } from '../config/types';
 import { resolveConfigPath } from '../utils/pathUtils';
-import { getResolvedBridgeConfig, validateBridgeConfig } from '../validation/validateConfig';
 
 export function registerOpenManifestCommand(context: vscode.ExtensionContext): void {
   const disposable = vscode.commands.registerCommand('unityDllBridge.openManifest', async () => {
     try {
-      const loadedConfig = await loadBridgeConfig();
-      const validation = await validateBridgeConfig(loadedConfig);
-      const resolvedConfig = getResolvedBridgeConfig(loadedConfig, validation);
+      const { resolvedConfig } = await resolveConfigForActiveConfiguration(context);
 
       if (!resolvedConfig) {
         vscode.window.showErrorMessage('无法打开 manifest：配置校验失败。');

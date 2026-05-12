@@ -14,5 +14,6 @@ The first vertical slice implements:
 - manifest and sync log generation
 - status bar quick actions
 - `Unity DLL Bridge: Create Config Template`
+- `Unity DLL Bridge: Select Configuration`
 
 Runtime dependencies are intentionally kept at zero for offline-friendly VSIX distribution.

@@ -47,4 +47,5 @@ export interface ResolvedBridgeConfig {
   configDir: string;
   workspaceRoot: string;
   config: BridgeConfig;
+  activeConfiguration: string;
 }

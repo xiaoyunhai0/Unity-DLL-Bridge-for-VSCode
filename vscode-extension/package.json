@@ -21,7 +21,8 @@
     "onCommand:unityDllBridge.syncOnly",
     "onCommand:unityDllBridge.openSyncLog",
     "onCommand:unityDllBridge.openManifest",
-    "onCommand:unityDllBridge.createConfigTemplate"
+    "onCommand:unityDllBridge.createConfigTemplate",
+    "onCommand:unityDllBridge.selectConfiguration"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -45,6 +46,10 @@
       {
         "command": "unityDllBridge.createConfigTemplate",
         "title": "Unity DLL Bridge: Create Config Template"
+      },
+      {
+        "command": "unityDllBridge.selectConfiguration",
+        "title": "Unity DLL Bridge: Select Configuration"
       }
     ]
   },

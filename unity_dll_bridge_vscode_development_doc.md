@@ -360,17 +360,27 @@ Unity DLL Bridge: Validate Configuration
 Unity DLL Bridge: Open Manifest
 Unity DLL Bridge: Open Sync Log
 Unity DLL Bridge: Create Config Template
+Unity DLL Bridge: Select Configuration
 ```
 
-状态栏提供 `DLL Bridge` 入口，点击后显示 Quick Pick：
+状态栏提供 `DLL Bridge` 入口。读取到配置后显示当前活动配置，例如：
 
 ```text
+DLL Bridge: Debug
+```
+
+点击后显示 Quick Pick：
+
+```text
+Select Configuration
 Validate Configuration
 Sync Only
 Open Sync Log
 Open Manifest
 Create Config Template
 ```
+
+`Select Configuration` 将 Debug / Release 等选择保存到 VSCode workspace state，不修改团队共享的 `dllbridge.json`。
 
 `Sync Only` 行为：
 
@@ -389,7 +399,6 @@ v0.2 再提供：
 ```text
 Unity DLL Bridge: Build & Sync Debug
 Unity DLL Bridge: Build & Sync Release
-Unity DLL Bridge: Select Configuration
 Unity DLL Bridge: Clean Target DLLs
 ```
 

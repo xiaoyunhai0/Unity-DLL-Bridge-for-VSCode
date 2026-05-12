@@ -1,13 +1,11 @@
 import * as vscode from 'vscode';
-import { loadBridgeConfig } from '../config/loadConfig';
-import { validateBridgeConfig } from '../validation/validateConfig';
+import { resolveConfigForActiveConfiguration } from '../config/resolveConfig';
 import { showValidationReport } from './validationReport';
 
 export function registerValidateConfigurationCommand(context: vscode.ExtensionContext): void {
   const disposable = vscode.commands.registerCommand('unityDllBridge.validateConfiguration', async () => {
     try {
-      const loadedConfig = await loadBridgeConfig();
-      const result = await validateBridgeConfig(loadedConfig);
+      const { validation: result, resolvedConfig } = await resolveConfigForActiveConfiguration(context);
 
       if (result.errors.length > 0) {
         const message = `DLL Bridge 配置校验失败：${result.errors.length} 个错误`;
@@ -21,7 +19,7 @@ export function registerValidateConfigurationCommand(context: vscode.ExtensionCo
       }
 
       const warningSummary = result.warnings.length > 0 ? `，${result.warnings.length} 个提醒` : '';
-      vscode.window.showInformationMessage(`DLL Bridge 配置校验通过${warningSummary}`);
+      vscode.window.showInformationMessage(`DLL Bridge 配置校验通过：${resolvedConfig?.activeConfiguration ?? 'Unknown'}${warningSummary}`);
 
       if (result.warnings.length > 0) {
         showValidationReport(result);
