@@ -31,6 +31,7 @@
     "onCommand:unityDllBridge.syncOnly",
     "onCommand:unityDllBridge.openSyncLog",
     "onCommand:unityDllBridge.openManifest",
+    "onCommand:unityDllBridge.openConfiguration",
     "onCommand:unityDllBridge.createConfigTemplate",
     "onCommand:unityDllBridge.selectConfiguration",
     "onCommand:unityDllBridge.buildDllOnly",
@@ -51,7 +52,7 @@
       "unityDllBridge": [
         {
           "id": "unityDllBridge.actionsView",
-          "name": "Actions"
+          "name": "工作台"
         }
       ]
     },
@@ -73,6 +74,10 @@
         "title": "Unity DLL Bridge: Open Manifest"
       },
       {
+        "command": "unityDllBridge.openConfiguration",
+        "title": "Unity DLL Bridge: Open Configuration"
+      },
+      {
         "command": "unityDllBridge.createConfigTemplate",
         "title": "Unity DLL Bridge: Create Config Template"
       },
@@ -91,6 +96,11 @@
     ],
     "menus": {
       "view/title": [
+        {
+          "command": "unityDllBridge.openConfiguration",
+          "when": "view == unityDllBridge.actionsView",
+          "group": "navigation"
+        },
         {
           "command": "unityDllBridge.validateConfiguration",
           "when": "view == unityDllBridge.actionsView",

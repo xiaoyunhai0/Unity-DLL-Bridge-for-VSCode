@@ -107,7 +107,7 @@ unity-dll-bridge/
 VSCode 扩展是第一优先级，负责：
 
 - 读取 `dllbridge.json`。
-- 提供左侧 Activity Bar `DLL Bridge` 插件页面。
+- 提供左侧 Activity Bar `DLL Bridge` 工作台，展示配置状态、错误提醒和项目摘要。
 - 校验配置路径。
 - 从外部 C# 工程输出目录读取 DLL/PDB/XML。
 - 复制产物到 Unity 指定目录。
@@ -368,17 +368,15 @@ Unity DLL Bridge: Build DLL Only
 Unity DLL Bridge: Build & Sync
 ```
 
-Activity Bar 提供 `DLL Bridge` 插件页面，展示常用操作列表：
+Activity Bar 提供 `DLL Bridge` 工作台，展示配置状态、当前配置、项目摘要、错误/提醒列表和操作区：
 
 ```text
-Create Config Template
-Select Configuration
-Validate Configuration
-Build DLL Only
-Build & Sync
-Sync Only
-Open Sync Log
-Open Manifest
+配置健康状态
+当前配置和项目数量
+错误 / 提醒列表
+编辑配置 / 创建配置
+构建与同步操作
+日志和 manifest 入口
 ```
 
 状态栏提供 `DLL Bridge` 入口。读取到配置后显示当前活动配置，例如：

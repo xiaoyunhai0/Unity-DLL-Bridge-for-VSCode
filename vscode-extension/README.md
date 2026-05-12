@@ -16,7 +16,7 @@ Unity Assets/Plugins
 
 ## 主要能力
 
-- 左侧 Activity Bar 提供 `DLL Bridge` 插件页面。
+- 左侧 Activity Bar 提供 `DLL Bridge` 工作台，展示配置状态、错误、提醒和项目摘要。
 - 状态栏提供常用操作入口。
 - 生成 `dllbridge.json` 配置模板。
 - 支持 Debug / Release 等配置切换。
@@ -31,22 +31,21 @@ Unity Assets/Plugins
 
 安装 VSIX 后，VSCode 左侧 Activity Bar 会出现 `DLL Bridge` 图标。
 
-点击后可以看到以下操作：
+点击后可以看到：
 
 ```text
-Create Config Template
-Select Configuration
-Validate Configuration
-Build DLL Only
-Build & Sync
-Sync Only
-Open Sync Log
-Open Manifest
+配置健康状态
+当前配置和项目数量
+错误 / 提醒列表
+编辑配置 / 创建配置
+构建与同步操作
+日志和 manifest 入口
 ```
 
 也可以打开命令面板，搜索 `Unity DLL Bridge` 使用全部命令。
 
 如果还没有 `dllbridge.json`，优先点击左侧 `DLL Bridge` 页面里的 `Create Config Template`。
+如果配置有错误，左侧工作台会显示错误列表，并提供 `编辑配置` 按钮直接打开 `dllbridge.json` 修改。
 
 ## 推荐流程
 
@@ -65,6 +64,7 @@ Open Manifest
 | `Unity DLL Bridge: Create Config Template` | 在当前工作区创建 `dllbridge.json`。 |
 | `Unity DLL Bridge: Select Configuration` | 选择 Debug / Release 或其他配置。 |
 | `Unity DLL Bridge: Validate Configuration` | 校验 Unity 工程路径、输出目录、目标目录和安全配置。 |
+| `Unity DLL Bridge: Open Configuration` | 打开 `dllbridge.json`，即使配置内容有错误也可以直接修改。 |
 | `Unity DLL Bridge: Build DLL Only` | 执行配置的构建命令，不复制文件到 Unity。 |
 | `Unity DLL Bridge: Sync Only` | 将已有 DLL/PDB/XML/依赖 DLL 同步到 Unity。 |
 | `Unity DLL Bridge: Build & Sync` | 先执行构建命令，再同步产物到 Unity。 |
@@ -255,6 +255,13 @@ checksums.txt
 
 - 打开包含 `dllbridge.json` 的工作区。
 - 或在左侧 `DLL Bridge` 页面执行 `Create Config Template`。
+
+`配置有错误但不知道怎么改`：
+
+- 打开左侧 `DLL Bridge` 工作台。
+- 查看顶部状态和“问题”区域的错误列表。
+- 点击 `编辑配置` 直接打开 `dllbridge.json` 修改。
+- 修改后点击 `重新校验` 或刷新面板。
 
 `找不到主 DLL`：
 
