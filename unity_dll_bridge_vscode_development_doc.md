@@ -359,6 +359,17 @@ Unity DLL Bridge: Sync Only
 Unity DLL Bridge: Validate Configuration
 Unity DLL Bridge: Open Manifest
 Unity DLL Bridge: Open Sync Log
+Unity DLL Bridge: Create Config Template
+```
+
+状态栏提供 `DLL Bridge` 入口，点击后显示 Quick Pick：
+
+```text
+Validate Configuration
+Sync Only
+Open Sync Log
+Open Manifest
+Create Config Template
 ```
 
 `Sync Only` 行为：
@@ -379,7 +390,6 @@ v0.2 再提供：
 Unity DLL Bridge: Build & Sync Debug
 Unity DLL Bridge: Build & Sync Release
 Unity DLL Bridge: Select Configuration
-Unity DLL Bridge: Create Config Template
 Unity DLL Bridge: Clean Target DLLs
 ```
 

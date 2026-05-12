@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "name": "MyUnityGame",
+  "unityProject": "../UnityClient",
+  "defaultConfiguration": "Debug",
+  "build": {
+    "mode": "syncOnly"
+  },
+  "privacy": {
+    "hideAbsolutePathsInManifest": true
+  },
+  "projects": [
+    {
+      "id": "game-logic",
+      "name": "GameLogic",
+      "assemblyName": "GameLogic",
+      "sourceProject": "../GameLogic/GameLogic.csproj",
+      "targetPluginPath": "../UnityClient/Assets/Plugins/GameLogic/Runtime",
+      "allowSourceCopy": false,
+      "configurations": {
+        "Debug": {
+          "outputDir": "../GameLogic/bin/Debug/netstandard2.1",
+          "copyPdb": true,
+          "copyXml": true,
+          "backupBeforeOverwrite": true,
+          "dependencies": []
+        },
+        "Release": {
+          "outputDir": "../GameLogic/bin/Release/netstandard2.1",
+          "copyPdb": false,
+          "copyXml": false,
+          "backupBeforeOverwrite": true,
+          "dependencies": []
+        }
+      }
+    }
+  ]
+}

@@ -26,14 +26,16 @@ checksums.txt
 
 ## 配置项目
 
-1. 从模板包中复制 `dllbridge.single.json`。
-2. 重命名为 `dllbridge.json`。
-3. 放到 VSCode 工作区根目录。
+1. 在 VSCode 中打开目标工作区。
+2. 执行 `Unity DLL Bridge: Create Config Template` 生成 `dllbridge.json`。
+3. 也可以从模板包中复制 `dllbridge.single.json`，重命名为 `dllbridge.json` 后放到工作区根目录。
 4. 修改 `unityProject`、`outputDir`、`targetPluginPath` 和 `assemblyName`。
 5. 在 VSCode 命令面板执行 `Unity DLL Bridge: Validate Configuration`。
 6. 确认配置通过后，执行 `Unity DLL Bridge: Sync Only`。
 7. 如需查看同步日志，执行 `Unity DLL Bridge: Open Sync Log`。
 8. 如需查看生成的 DLL 版本信息，执行 `Unity DLL Bridge: Open Manifest`。
+
+安装扩展后，VSCode 状态栏会显示 `DLL Bridge`，点击后可以选择常用操作。
 
 ## 安装 Unity 插件
 
