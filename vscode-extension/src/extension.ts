@@ -7,17 +7,19 @@ import { registerOpenSyncLogCommand } from './commands/openSyncLog';
 import { registerSelectConfigurationCommand } from './commands/selectConfiguration';
 import { registerSyncOnlyCommand } from './commands/syncOnly';
 import { registerValidateConfigurationCommand } from './commands/validateConfiguration';
+import { registerActionsView } from './views/actionsView';
 import { registerStatusBar } from './views/statusBar';
 
 export function activate(context: vscode.ExtensionContext): void {
   const statusBar = registerStatusBar(context);
+  registerActionsView(context);
   registerBuildDllOnlyCommand(context);
   registerBuildAndSyncCommand(context);
   registerValidateConfigurationCommand(context);
   registerSyncOnlyCommand(context);
   registerOpenSyncLogCommand(context);
   registerOpenManifestCommand(context);
-  registerCreateConfigTemplateCommand(context);
+  registerCreateConfigTemplateCommand(context, () => statusBar.refresh());
   registerSelectConfigurationCommand(context, () => statusBar.refresh());
 }
 

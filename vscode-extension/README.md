@@ -18,6 +18,7 @@ Unity Assets/Plugins
 
 - Offline-friendly VSIX distribution.
 - No runtime npm dependencies.
+- Activity Bar `DLL Bridge` view with one-click actions.
 - Status bar entry for common actions.
 - `dllbridge.json` template generation.
 - Debug / Release configuration switching.
@@ -31,7 +32,7 @@ Unity Assets/Plugins
 ## Workflow
 
 1. Open the external C# project workspace in VSCode.
-2. Run `Unity DLL Bridge: Create Config Template`.
+2. Open the `DLL Bridge` icon in the Activity Bar, or run `Unity DLL Bridge: Create Config Template`.
 3. Edit `dllbridge.json`.
 4. Select `Debug` or `Release`.
 5. Run `Validate Configuration`.
@@ -51,7 +52,8 @@ Unity Assets/Plugins
 | `Unity DLL Bridge: Open Sync Log` | Open `.dllbridge/logs/latest.log`. |
 | `Unity DLL Bridge: Open Manifest` | Open the generated Unity-side `manifest.json`. |
 
-The extension also adds a `DLL Bridge` status bar entry with quick actions.
+The extension adds an Activity Bar `DLL Bridge` view and a `DLL Bridge` status bar entry with quick actions.
+If no `dllbridge.json` exists yet, use the Activity Bar view or the command palette to create one.
 
 ## Configuration
 

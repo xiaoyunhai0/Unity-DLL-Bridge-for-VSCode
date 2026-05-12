@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { fileExists } from '../utils/pathUtils';
 
-export function registerCreateConfigTemplateCommand(context: vscode.ExtensionContext): void {
+export function registerCreateConfigTemplateCommand(context: vscode.ExtensionContext, onDidCreateConfig?: () => void): void {
   const disposable = vscode.commands.registerCommand('unityDllBridge.createConfigTemplate', async () => {
     try {
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
@@ -27,6 +27,7 @@ export function registerCreateConfigTemplateCommand(context: vscode.ExtensionCon
 
       const document = await vscode.workspace.openTextDocument(targetPath);
       await vscode.window.showTextDocument(document);
+      onDidCreateConfig?.();
       vscode.window.showInformationMessage('已创建 dllbridge.json，请按你的 Unity 工程和 DLL 输出目录修改路径。');
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

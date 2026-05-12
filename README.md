@@ -20,6 +20,7 @@ Unity 只引用 DLL，不直接暴露源码
 
 VSCode 扩展：
 
+- 在 VSCode 左侧 Activity Bar 提供 `DLL Bridge` 插件页面。
 - 生成 `dllbridge.json` 配置模板。
 - 校验 Unity 工程路径、DLL 输出目录和目标插件目录。
 - 支持 Debug / Release 等配置切换。
@@ -66,6 +67,9 @@ UnityDllBridge-VSCode-<version>.vsix
 ```text
 Extensions -> ... -> Install from VSIX...
 ```
+
+安装后，VSCode 左侧 Activity Bar 会出现 `DLL Bridge` 图标。点击后可以直接执行创建配置、构建 DLL、同步、打开日志等操作。
+也可以在命令面板搜索 `Unity DLL Bridge` 使用所有命令。
 
 ### 2. 创建配置
 

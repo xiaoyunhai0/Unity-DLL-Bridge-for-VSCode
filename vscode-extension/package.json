@@ -24,6 +24,7 @@
     "offline"
   ],
   "activationEvents": [
+    "onView:unityDllBridge.actionsView",
     "workspaceContains:dllbridge.json",
     "workspaceContains:.dllbridge/dllbridge.json",
     "onCommand:unityDllBridge.validateConfiguration",
@@ -37,6 +38,23 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "unityDllBridge",
+          "title": "DLL Bridge",
+          "icon": "resources/dll-bridge.svg"
+        }
+      ]
+    },
+    "views": {
+      "unityDllBridge": [
+        {
+          "id": "unityDllBridge.actionsView",
+          "name": "Actions"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "unityDllBridge.validateConfiguration",
@@ -70,7 +88,16 @@
         "command": "unityDllBridge.buildAndSync",
         "title": "Unity DLL Bridge: Build & Sync"
       }
-    ]
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "unityDllBridge.validateConfiguration",
+          "when": "view == unityDllBridge.actionsView",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
     "compile": "tsc -p ./",

@@ -26,6 +26,8 @@ checksums.txt
 4. 选择 `Install from VSIX...`。
 5. 选择 `UnityDllBridge-VSCode-<version>.vsix`。
 
+安装完成后，VSCode 左侧 Activity Bar 会出现 `DLL Bridge` 图标。点击后可以看到创建配置、构建 DLL、同步、打开日志和打开 manifest 等操作。
+
 ## 配置项目
 
 1. 在 VSCode 中打开目标工作区。
@@ -41,6 +43,7 @@ checksums.txt
 11. 如需查看生成的 DLL 版本信息，执行 `Unity DLL Bridge: Open Manifest`。
 
 安装扩展后，VSCode 状态栏会显示 `DLL Bridge` 或 `DLL Bridge: Debug`，点击后可以选择常用操作。
+如果还没有 `dllbridge.json`，优先使用左侧 `DLL Bridge` 插件页面里的 `Create Config Template`。
 
 ## 安装 Unity 插件
 
