@@ -1,7 +1,7 @@
 {
   "name": "unity-dll-bridge",
   "displayName": "Unity DLL Bridge",
-  "description": "Validate and sync external C# DLL outputs into Unity projects.",
+  "description": "在 VSCode 中构建、校验并同步外部 C# DLL 到 Unity 工程。",
   "version": "0.1.0",
   "publisher": "xiaoyunhai0",
   "license": "MIT",
