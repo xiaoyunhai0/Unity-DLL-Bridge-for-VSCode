@@ -18,7 +18,7 @@ export function registerOpenSyncLogCommand(context: vscode.ExtensionContext): vo
       const document = await vscode.workspace.openTextDocument(logPath);
       await vscode.window.showTextDocument(document);
     } catch {
-      vscode.window.showWarningMessage('还没有同步日志。请先执行 Unity DLL Bridge: Sync Only。');
+      vscode.window.showWarningMessage('还没有构建或同步日志。请先执行 Unity DLL Bridge: Build DLL Only 或 Sync Only。');
     }
   });
 

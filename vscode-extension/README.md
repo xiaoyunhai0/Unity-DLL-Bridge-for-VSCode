@@ -22,6 +22,7 @@ Unity Assets/Plugins
 - `dllbridge.json` template generation.
 - Debug / Release configuration switching.
 - `Sync Only` for DLLs already built by Visual Studio or internal tools.
+- `Build DLL Only` for building DLL outputs in VSCode without syncing to Unity.
 - `Build & Sync` for `dotnet`, `msbuild`, or custom build commands.
 - Manifest generation with SHA256 hashes.
 - Local sync logs under `.dllbridge/logs/`.
@@ -34,7 +35,7 @@ Unity Assets/Plugins
 3. Edit `dllbridge.json`.
 4. Select `Debug` or `Release`.
 5. Run `Validate Configuration`.
-6. Run `Sync Only` or `Build & Sync`.
+6. Run `Build DLL Only`, `Sync Only`, or `Build & Sync`.
 7. Open Unity and refresh assets, or use the optional Unity Editor plugin.
 
 ## Commands
@@ -44,6 +45,7 @@ Unity Assets/Plugins
 | `Unity DLL Bridge: Create Config Template` | Create `dllbridge.json` in the current workspace. |
 | `Unity DLL Bridge: Select Configuration` | Select Debug / Release or another configured build configuration. |
 | `Unity DLL Bridge: Validate Configuration` | Validate paths, target Unity project, output DLLs, and safety settings. |
+| `Unity DLL Bridge: Build DLL Only` | Run the configured build command without copying files into Unity. |
 | `Unity DLL Bridge: Sync Only` | Copy existing DLL/PDB/XML/dependency outputs into Unity. |
 | `Unity DLL Bridge: Build & Sync` | Run the configured build command, then sync outputs. |
 | `Unity DLL Bridge: Open Sync Log` | Open `.dllbridge/logs/latest.log`. |
@@ -126,6 +128,12 @@ Minimal example:
     "timeoutSeconds": 120
   }
 }
+```
+
+With `dotnet`, `Build DLL Only` and `Build & Sync` run a command like:
+
+```text
+dotnet build ../GameLogic/GameLogic.csproj -c Debug
 ```
 
 `msbuild`:
@@ -226,6 +234,7 @@ If `allowSourceCopy` is set to `true`, validation fails.
 `Main DLL not found`:
 
 - Build the external C# project first, or use `Build & Sync`.
+- Use `Build DLL Only` when you want VSCode to build the DLL but do not want to copy it into Unity yet.
 - Check `assemblyName` and `outputDir`.
 
 `targetPluginPath must be inside Assets`:

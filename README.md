@@ -24,6 +24,7 @@ VSCode 扩展：
 - 校验 Unity 工程路径、DLL 输出目录和目标插件目录。
 - 支持 Debug / Release 等配置切换。
 - 支持 `Sync Only`：同步已经存在的 DLL/PDB/XML/依赖 DLL。
+- 支持 `Build DLL Only`：在 VSCode 中调用 `dotnet`、`msbuild` 或自定义命令，只构建 DLL。
 - 支持 `Build & Sync`：调用 `dotnet`、`msbuild` 或自定义命令后同步。
 - 生成 `manifest.json`，记录 DLL hash、大小、配置和同步时间。
 - 生成 `.dllbridge/logs/latest.log` 和时间戳日志。
@@ -135,6 +136,7 @@ UnityDllBridge-Templates-<version>.zip
 ```text
 Unity DLL Bridge: Select Configuration
 Unity DLL Bridge: Validate Configuration
+Unity DLL Bridge: Build DLL Only
 Unity DLL Bridge: Sync Only
 Unity DLL Bridge: Build & Sync
 Unity DLL Bridge: Open Sync Log
@@ -143,7 +145,8 @@ Unity DLL Bridge: Open Manifest
 
 如果 DLL 已经由 Visual Studio 或内部工具编译好，使用 `Sync Only`。
 
-如果希望 VSCode 扩展触发构建，配置 `build.mode` 后使用 `Build & Sync`。
+如果希望 VSCode 扩展触发构建，配置 `build.mode` 后使用 `Build DLL Only` 或 `Build & Sync`。
+其中 `Build DLL Only` 只执行构建，不复制到 Unity；`Build & Sync` 会先构建再同步。
 
 ## 构建模式
 
@@ -167,6 +170,12 @@ Unity DLL Bridge: Open Manifest
     "timeoutSeconds": 120
   }
 }
+```
+
+配置为 `dotnet` 后，`Build DLL Only` 和 `Build & Sync` 都会执行类似下面的命令：
+
+```text
+dotnet build ../GameLogic/GameLogic.csproj -c Debug
 ```
 
 `msbuild`：

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { registerBuildAndSyncCommand } from './commands/buildAndSync';
+import { registerBuildDllOnlyCommand } from './commands/buildDllOnly';
 import { registerCreateConfigTemplateCommand } from './commands/createConfigTemplate';
 import { registerOpenManifestCommand } from './commands/openManifest';
 import { registerOpenSyncLogCommand } from './commands/openSyncLog';
@@ -10,6 +11,7 @@ import { registerStatusBar } from './views/statusBar';
 
 export function activate(context: vscode.ExtensionContext): void {
   const statusBar = registerStatusBar(context);
+  registerBuildDllOnlyCommand(context);
   registerBuildAndSyncCommand(context);
   registerValidateConfigurationCommand(context);
   registerSyncOnlyCommand(context);

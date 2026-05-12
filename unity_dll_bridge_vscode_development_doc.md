@@ -112,7 +112,7 @@ VSCode 扩展是第一优先级，负责：
 - 复制产物到 Unity 指定目录。
 - 生成 `manifest.json`。
 - 输出同步日志。
-- 提供 `Sync Only`、`Validate Configuration`、`Open Manifest`、`Open Log` 等命令。
+- 提供 `Build DLL Only`、`Build & Sync`、`Sync Only`、`Validate Configuration`、`Open Manifest`、`Open Log` 等命令。
 - 打包成 VSIX，支持离线安装。
 
 ### 4.2 Unity Editor 插件
@@ -134,9 +134,9 @@ Unity 插件是增强体验，不应阻塞 v0.1。
 
 ## 5. v0.1 范围
 
-v0.1 的核心是 **Sync Only**。
+v0.1 的核心是 **外部 C# 工程 DLL 工作流**。
 
-第一版不要求工具负责编译 C# Project。使用者可以继续用 Visual Studio、Build Tools、公司内部脚本或 CI 生成 DLL。
+第一版同时支持“只同步已有 DLL”和“在 VSCode 中调用外部构建工具生成 DLL”。使用者可以继续用 Visual Studio、Build Tools、公司内部脚本或 CI 生成 DLL，也可以在 `build.mode` 配置为 `dotnet`、`msbuild` 或 `custom` 后用扩展触发构建。
 
 ### 5.1 v0.1 必做功能
 
@@ -339,7 +339,7 @@ v0.1 只要求 `syncOnly`。
 | name | 当前桥接配置名称 |
 | unityProject | Unity 工程路径 |
 | defaultConfiguration | 默认配置，例如 Debug / Release |
-| build.mode | 构建模式，v0.1 固定使用 syncOnly |
+| build.mode | 构建模式，支持 syncOnly / dotnet / msbuild / custom |
 | privacy.hideAbsolutePathsInManifest | manifest 是否隐藏绝对路径 |
 | projects | 外部 C# 工程列表 |
 | sourceProject | 源工程路径，只用于记录和校验，不复制到 Unity |
@@ -363,6 +363,7 @@ Unity DLL Bridge: Open Manifest
 Unity DLL Bridge: Open Sync Log
 Unity DLL Bridge: Create Config Template
 Unity DLL Bridge: Select Configuration
+Unity DLL Bridge: Build DLL Only
 Unity DLL Bridge: Build & Sync
 ```
 
@@ -376,6 +377,7 @@ DLL Bridge: Debug
 
 ```text
 Select Configuration
+Build DLL Only
 Build & Sync
 Validate Configuration
 Sync Only
@@ -385,6 +387,17 @@ Create Config Template
 ```
 
 `Select Configuration` 将 Debug / Release 等选择保存到 VSCode workspace state，不修改团队共享的 `dllbridge.json`。
+
+`Build DLL Only` 行为：
+
+```text
+1. 读取当前活动配置。
+2. 做不要求 DLL 已存在的配置校验。
+3. 根据 build.mode 调用 dotnet / msbuild / custom。
+4. 写入构建日志。
+5. 构建成功后再次校验 outputDir 中是否存在主 DLL。
+6. 不复制任何文件到 Unity。
+```
 
 `Build & Sync` 行为：
 
@@ -904,6 +917,7 @@ DllBridgeValidator.cs
 
 ```text
 在 VSCode 中执行 Build & Sync Debug，可以调用外部构建工具并同步 DLL。
+在 VSCode 中执行 Build DLL Only Debug，可以只调用外部构建工具生成 DLL，不同步到 Unity。
 ```
 
 ### 17.4 第 4 周：Unity 联动和校验
