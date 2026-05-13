@@ -18,7 +18,7 @@ Unity Assets/Plugins
 
 - 左侧 Activity Bar 提供 `DLL Bridge` 工作台，展示配置状态、错误、提醒和项目摘要。
 - 状态栏提供常用操作入口。
-- 提供中文配置向导：选择 Unity 工程、`.csproj` 或已有 DLL 后自动生成 `dllbridge.json`。
+- 提供中文配置向导：选择 Unity 工程、外部 C# 工程文件夹、`.csproj` 或已有 DLL 输出文件夹后自动生成 `dllbridge.json`。
 - 生成 `dllbridge.json` 配置模板。
 - 支持 Debug / Release 等配置切换。
 - `仅构建 DLL`：只在 VSCode 中调用 `dotnet`、`msbuild` 或自定义命令构建 DLL，不同步到 Unity。
@@ -53,7 +53,7 @@ Unity Assets/Plugins
 1. 在 VSCode 中打开外部 C# 工程工作区。
 2. 打开左侧 `DLL Bridge` 插件页面。
 3. 执行 `配置向导`。
-4. 依次选择 Unity 工程根目录、外部 `.csproj` 或已有 DLL、Unity 目标目录。
+4. 依次选择 Unity 工程根目录、外部 C# 工程文件夹或已有 DLL 输出文件夹、Unity 目标目录。
 5. 执行 `校验配置`。
 6. 根据需要执行 `仅构建 DLL`、`仅同步 DLL` 或 `构建并同步`。
 7. 回到 Unity 刷新资源，或配合可选 Unity Editor 插件查看 manifest。
@@ -62,7 +62,8 @@ Unity Assets/Plugins
 
 ```text
 Unity 工程根目录：包含 Assets 的目录
-外部 C# 项目：优先选 .csproj；没有项目文件时选主 DLL
+外部 C# 项目：优先选源码工程文件夹；.csproj 代表整个项目，不是单个 .cs 文件
+DLL 输出：已有构建流程时选包含 DLL 的输出文件夹
 Unity 目标目录：建议选 Assets/Plugins/<程序集名>/Runtime
 ```
 
@@ -70,7 +71,7 @@ Unity 目标目录：建议选 Assets/Plugins/<程序集名>/Runtime
 
 | 命令 | 作用 |
 |---|---|
-| `Unity DLL Bridge: 配置向导` | 选择 Unity 工程、C# 项目或 DLL 输出目录，自动生成 `dllbridge.json`。 |
+| `Unity DLL Bridge: 配置向导` | 选择 Unity 工程、C# 工程文件夹或 DLL 输出文件夹，自动生成 `dllbridge.json`。 |
 | `Unity DLL Bridge: 创建配置模板` | 在当前工作区创建手写模板。 |
 | `Unity DLL Bridge: 选择 Debug/Release 配置` | 选择 Debug / Release 或其他配置。 |
 | `Unity DLL Bridge: 校验配置` | 校验 Unity 工程路径、输出目录、目标目录和安全配置。 |
@@ -116,6 +117,7 @@ workspace/.dllbridge/dllbridge.json
       "configurations": {
         "Debug": {
           "outputDir": "../GameLogic/bin/Debug/netstandard2.1",
+          "copyAllDlls": false,
           "copyPdb": true,
           "copyXml": true,
           "backupBeforeOverwrite": true,
@@ -123,6 +125,7 @@ workspace/.dllbridge/dllbridge.json
         },
         "Release": {
           "outputDir": "../GameLogic/bin/Release/netstandard2.1",
+          "copyAllDlls": false,
           "copyPdb": false,
           "copyXml": false,
           "backupBeforeOverwrite": true,

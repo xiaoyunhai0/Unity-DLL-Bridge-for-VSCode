@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import { BridgeBuildConfig, BridgeConfig, BridgeProjectConfiguration } from '../config/types';
 import { getRelativePath } from '../utils/pathUtils';
 
-type SourceMode = 'csproj' | 'dllOutput';
+type SourceMode = 'projectFolder' | 'csproj' | 'dllOutputFolder' | 'dllFile';
 type BuildMode = 'syncOnly' | 'dotnet';
 
 interface SelectedSource {
@@ -15,6 +15,7 @@ interface SelectedSource {
   debugOutputDir: string;
   releaseOutputDir: string;
   targetFramework?: string;
+  copyAllDlls: boolean;
   hasDebugDll: boolean;
   hasReleaseDll: boolean;
 }
@@ -141,28 +142,75 @@ async function chooseSource(workspaceRoot: string): Promise<SelectedSource | und
   const mode = await vscode.window.showQuickPick<QuickPickChoice<SourceMode>>(
     [
       {
-        label: '选择 C# 项目文件（推荐）',
-        description: '选择 .csproj，自动推断程序集名和 Debug/Release 输出目录',
+        label: '选择外部 C# 工程文件夹（推荐）',
+        description: '选择包含很多 .cs 和 .csproj 的工程目录，向导会自动查找项目文件',
+        value: 'projectFolder'
+      },
+      {
+        label: '直接选择 .csproj 项目文件',
+        description: '.csproj 代表整个 C# 项目，不是单个 .cs 文件',
         value: 'csproj'
       },
       {
-        label: '选择已有 DLL 输出目录',
-        description: '没有 .csproj 或只想同步现成 DLL 时使用',
-        value: 'dllOutput'
+        label: '选择已有 DLL 输出文件夹',
+        description: '从一个输出文件夹同步到 Unity 插件文件夹，适合公司已有构建流程',
+        value: 'dllOutputFolder'
+      },
+      {
+        label: '选择单个主 DLL',
+        description: '只知道主 DLL 文件位置时使用；后续仍可选择复制同目录全部 DLL',
+        value: 'dllFile'
       }
     ],
-    { placeHolder: '外部 C# 代码现在以哪种方式提供给 Unity？' }
+    { placeHolder: '选择外部 C# 大项目或 DLL 输出文件夹' }
   );
 
   if (!mode) {
     return undefined;
   }
 
+  if (mode.value === 'projectFolder') {
+    return chooseProjectFolderSource(workspaceRoot);
+  }
+
   if (mode.value === 'csproj') {
     return chooseCsprojSource(workspaceRoot);
   }
 
-  return chooseDllOutputSource(workspaceRoot);
+  if (mode.value === 'dllOutputFolder') {
+    return chooseDllOutputFolderSource(workspaceRoot);
+  }
+
+  return chooseDllFileSource(workspaceRoot);
+}
+
+async function chooseProjectFolderSource(workspaceRoot: string): Promise<SelectedSource | undefined> {
+  const selectedFolder = await showFolderPicker('选择外部 C# 工程文件夹，也就是包含很多 .cs 文件和 .csproj 的目录', workspaceRoot);
+  if (!selectedFolder) {
+    return undefined;
+  }
+
+  const csprojCandidates = await findFiles(selectedFolder, '.csproj', 4, 30);
+  if (csprojCandidates.length > 0) {
+    const csprojPath = await chooseCsprojFromCandidates(workspaceRoot, csprojCandidates, '在工程文件夹中找到多个 .csproj，请选择要编译成 DLL 的项目');
+    if (!csprojPath) {
+      return undefined;
+    }
+
+    return createCsprojSource(workspaceRoot, csprojPath);
+  }
+
+  const selection = await vscode.window.showWarningMessage(
+    '这个文件夹中没有找到 .csproj。工具不能直接把 .cs 文件夹复制到 Unity，需要先由 Visual Studio/dotnet/公司工具编译成 DLL。是否改选 DLL 输出文件夹？',
+    '选择 DLL 输出文件夹',
+    '取消'
+  );
+
+  if (selection !== '选择 DLL 输出文件夹') {
+    return undefined;
+  }
+
+  return chooseDllOutputFolderSource(workspaceRoot, selectedFolder);
 }
 
 async function chooseCsprojSource(workspaceRoot: string): Promise<SelectedSource | undefined> {
@@ -170,33 +218,11 @@ async function chooseCsprojSource(workspaceRoot: string): Promise<SelectedSource
   let csprojPath: string | undefined;
 
   if (candidates.length > 0) {
-    const selected = await vscode.window.showQuickPick(
-      [
-        ...candidates.map((candidate) => ({
-          label: path.basename(candidate),
-          description: getRelativePath(workspaceRoot, candidate),
-          detail: path.dirname(candidate),
-          path: candidate
-        })),
-        {
-          label: '浏览选择其他 .csproj...',
-          description: '从文件系统选择 C# 项目文件',
-          detail: '',
-          path: undefined
-        }
-      ],
-      { placeHolder: '选择外部 C# 项目文件' }
-    );
-
-    if (!selected) {
-      return undefined;
-    }
-
-    csprojPath = selected.path;
+    csprojPath = await chooseCsprojFromCandidates(workspaceRoot, candidates, '选择外部 C# 项目文件（.csproj 代表整个项目）');
   }
 
   if (!csprojPath) {
-    const selectedFile = await showFilePicker('选择外部 C# 项目文件（.csproj）', workspaceRoot, {
+    const selectedFile = await showFilePicker('选择外部 C# 项目文件（.csproj，代表整个项目）', workspaceRoot, {
       'C# Project': ['csproj']
     });
     if (!selectedFile) {
@@ -205,6 +231,32 @@ async function chooseCsprojSource(workspaceRoot: string): Promise<SelectedSource
     csprojPath = selectedFile;
   }
 
+  return createCsprojSource(workspaceRoot, csprojPath);
+}
+
+async function chooseCsprojFromCandidates(workspaceRoot: string, candidates: string[], placeHolder: string): Promise<string | undefined> {
+  const selected = await vscode.window.showQuickPick(
+    [
+      ...candidates.map((candidate) => ({
+        label: path.basename(candidate),
+        description: getRelativePath(workspaceRoot, candidate),
+        detail: path.dirname(candidate),
+        path: candidate
+      })),
+      {
+        label: '浏览选择其他 .csproj...',
+        description: '从文件系统选择 C# 项目文件',
+        detail: '',
+        path: undefined
+      }
+    ],
+    { placeHolder }
+  );
+
+  return selected?.path;
+}
+
+async function createCsprojSource(workspaceRoot: string, csprojPath: string): Promise<SelectedSource | undefined> {
   const projectInfo = await readCsprojInfo(csprojPath);
   const assemblyName = await askAssemblyName(projectInfo.assemblyName ?? path.basename(csprojPath, '.csproj'));
   if (!assemblyName) {
@@ -219,6 +271,7 @@ async function chooseCsprojSource(workspaceRoot: string): Promise<SelectedSource
   const sourceDirectory = path.dirname(csprojPath);
   const debugOutputDir = path.join(sourceDirectory, 'bin', 'Debug', targetFramework);
   const releaseOutputDir = path.join(sourceDirectory, 'bin', 'Release', targetFramework);
+  const copyAllDlls = await askCopyAllDlls(false);
 
   return {
     mode: 'csproj',
@@ -228,12 +281,40 @@ async function chooseCsprojSource(workspaceRoot: string): Promise<SelectedSource
     debugOutputDir,
     releaseOutputDir,
     targetFramework,
+    copyAllDlls,
     hasDebugDll: await fileExists(path.join(debugOutputDir, `${assemblyName}.dll`)),
     hasReleaseDll: await fileExists(path.join(releaseOutputDir, `${assemblyName}.dll`))
   };
 }
 
-async function chooseDllOutputSource(workspaceRoot: string): Promise<SelectedSource | undefined> {
+async function chooseDllOutputFolderSource(workspaceRoot: string, defaultFolder?: string): Promise<SelectedSource | undefined> {
+  const selectedFolder = await showFolderPicker('选择 DLL 输出文件夹，也就是包含 GameLogic.dll 等编译产物的目录', defaultFolder ?? workspaceRoot);
+  if (!selectedFolder) {
+    return undefined;
+  }
+
+  const dllFiles = await findDllFilesInDirectory(selectedFolder);
+  const defaultAssemblyName = dllFiles.length === 1 ? path.basename(dllFiles[0], '.dll') : path.basename(selectedFolder);
+  const assemblyName = await askAssemblyName(defaultAssemblyName);
+  if (!assemblyName) {
+    return undefined;
+  }
+
+  const copyAllDlls = await askCopyAllDlls(dllFiles.length > 1);
+
+  return {
+    mode: 'dllOutputFolder',
+    sourceDirectory: selectedFolder,
+    assemblyName,
+    debugOutputDir: selectedFolder,
+    releaseOutputDir: selectedFolder,
+    copyAllDlls,
+    hasDebugDll: await fileExists(path.join(selectedFolder, `${assemblyName}.dll`)),
+    hasReleaseDll: await fileExists(path.join(selectedFolder, `${assemblyName}.dll`))
+  };
+}
+
+async function chooseDllFileSource(workspaceRoot: string): Promise<SelectedSource | undefined> {
   const candidates = await findDllCandidates(workspaceRoot);
   let dllPath: string | undefined;
 
@@ -278,13 +359,16 @@ async function chooseDllOutputSource(workspaceRoot: string): Promise<SelectedSou
   if (!assemblyName) {
     return undefined;
   }
+  const siblingDlls = await findDllFilesInDirectory(outputDir);
+  const copyAllDlls = await askCopyAllDlls(siblingDlls.length > 1);
 
   return {
-    mode: 'dllOutput',
+    mode: 'dllFile',
     sourceDirectory: outputDir,
     assemblyName,
     debugOutputDir: outputDir,
     releaseOutputDir: outputDir,
+    copyAllDlls,
     hasDebugDll: await fileExists(path.join(outputDir, `${assemblyName}.dll`)),
     hasReleaseDll: await fileExists(path.join(outputDir, `${assemblyName}.dll`))
   };
@@ -354,7 +438,7 @@ async function chooseBuildMode(source: SelectedSource): Promise<BuildMode | unde
     }
   ];
 
-  if (source.mode === 'csproj') {
+  if (source.sourceProject) {
     choices.push({
       label: '在 VSCode 中使用 dotnet build 构建',
       description: '需要离线环境已安装 dotnet SDK',
@@ -377,8 +461,8 @@ function createConfig(
   targetPluginPath: string,
   buildMode: BuildMode
 ): BridgeConfig {
-  const debugConfig = createProjectConfiguration(workspaceRoot, source.debugOutputDir, true, true);
-  const releaseConfig = createProjectConfiguration(workspaceRoot, source.releaseOutputDir, false, false);
+  const debugConfig = createProjectConfiguration(workspaceRoot, source.debugOutputDir, source.copyAllDlls, true, true);
+  const releaseConfig = createProjectConfiguration(workspaceRoot, source.releaseOutputDir, source.copyAllDlls, false, false);
   const sourceProject = source.sourceProject ? getRelativePath(workspaceRoot, source.sourceProject) : undefined;
   const build = createBuildConfig(workspaceRoot, source, buildMode);
 
@@ -408,9 +492,16 @@ function createConfig(
   };
 }
 
-function createProjectConfiguration(workspaceRoot: string, outputDir: string, copyPdb: boolean, copyXml: boolean): BridgeProjectConfiguration {
+function createProjectConfiguration(
+  workspaceRoot: string,
+  outputDir: string,
+  copyAllDlls: boolean,
+  copyPdb: boolean,
+  copyXml: boolean
+): BridgeProjectConfiguration {
   return {
     outputDir: getRelativePath(workspaceRoot, outputDir),
+    copyAllDlls,
     copyPdb,
     copyXml,
     backupBeforeOverwrite: true,
@@ -488,6 +579,28 @@ async function askAssemblyName(defaultValue: string): Promise<string | undefined
   return value?.trim();
 }
 
+async function askCopyAllDlls(defaultValue: boolean): Promise<boolean> {
+  const selected = await vscode.window.showQuickPick<QuickPickChoice<'yes' | 'no'>>(
+    [
+      {
+        label: '同步输出文件夹中的所有 DLL',
+        description: '适合一个大项目会输出主 DLL 和多个依赖 DLL 的情况',
+        value: 'yes'
+      },
+      {
+        label: '只同步主 DLL 和显式依赖',
+        description: '适合只想把 assemblyName 对应的 DLL 放进 Unity',
+        value: 'no'
+      }
+    ],
+    {
+      placeHolder: '是否把 DLL 输出文件夹中的所有 DLL 都同步到 Unity？'
+    }
+  );
+
+  return selected?.value ? selected.value === 'yes' : defaultValue;
+}
+
 async function findUnityProjectCandidates(workspaceRoot: string): Promise<string[]> {
   const searchRoots = getNearbySearchRoots(workspaceRoot);
   const candidates: string[] = [];
@@ -507,6 +620,20 @@ async function findDllCandidates(workspaceRoot: string): Promise<string[]> {
       return normalized.includes('/bin/') && !normalized.includes('/obj/');
     })
     .slice(0, 80);
+}
+
+async function findDllFilesInDirectory(directory: string): Promise<string[]> {
+  let entries: Array<import('fs').Dirent>;
+  try {
+    entries = await fs.readdir(directory, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+
+  return entries
+    .filter((entry) => entry.isFile() && path.extname(entry.name).toLowerCase() === '.dll')
+    .map((entry) => path.join(directory, entry.name))
+    .sort();
 }
 
 async function findFilesInRoots(roots: string[], extension: string, maxDepth: number, maxResults: number): Promise<string[]> {

@@ -79,7 +79,7 @@ export async function syncOnly(resolvedConfig: ResolvedBridgeConfig, validationW
 async function collectFilesToCopy(
   assemblyName: string,
   outputDir: string,
-  configuration: { copyPdb?: boolean; copyXml?: boolean; dependencies?: string[] },
+  configuration: { copyAllDlls?: boolean; copyPdb?: boolean; copyXml?: boolean; dependencies?: string[] },
   configDir: string,
   warnings: string[]
 ): Promise<Array<{ sourcePath: string; name: string }>> {
@@ -96,6 +96,10 @@ async function collectFilesToCopy(
 
   if (configuration.copyXml === true) {
     await addOptionalArtifact(files, path.join(outputDir, `${assemblyName}.xml`), `${assemblyName}.xml`, warnings);
+  }
+
+  if (configuration.copyAllDlls === true) {
+    await addDllsFromOutputDirectory(files, outputDir, warnings);
   }
 
   for (const dependency of configuration.dependencies ?? []) {
@@ -124,6 +128,35 @@ async function collectFilesToCopy(
   }
 
   return files;
+}
+
+async function addDllsFromOutputDirectory(
+  files: Array<{ sourcePath: string; name: string }>,
+  outputDir: string,
+  warnings: string[]
+): Promise<void> {
+  let entries: Array<import('fs').Dirent>;
+  try {
+    entries = await fs.readdir(outputDir, { withFileTypes: true });
+  } catch {
+    warnings.push(`无法读取 DLL 输出目录，已跳过 copyAllDlls：${outputDir}`);
+    return;
+  }
+
+  for (const entry of entries) {
+    if (!entry.isFile() || path.extname(entry.name).toLowerCase() !== '.dll') {
+      continue;
+    }
+
+    if (files.some((file) => file.name.toLowerCase() === entry.name.toLowerCase())) {
+      continue;
+    }
+
+    files.push({
+      sourcePath: path.join(outputDir, entry.name),
+      name: entry.name
+    });
+  }
 }
 
 async function addOptionalArtifact(

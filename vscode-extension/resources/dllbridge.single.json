@@ -21,6 +21,7 @@
       "configurations": {
         "Debug": {
           "outputDir": "../GameLogic/bin/Debug/netstandard2.1",
+          "copyAllDlls": false,
           "copyPdb": true,
           "copyXml": true,
           "backupBeforeOverwrite": true,
@@ -28,6 +29,7 @@
         },
         "Release": {
           "outputDir": "../GameLogic/bin/Release/netstandard2.1",
+          "copyAllDlls": false,
           "copyPdb": false,
           "copyXml": false,
           "backupBeforeOverwrite": true,

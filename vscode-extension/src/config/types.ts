@@ -40,6 +40,7 @@ export interface BridgeProject {
 
 export interface BridgeProjectConfiguration {
   outputDir: string;
+  copyAllDlls?: boolean;
   copyPdb?: boolean;
   copyXml?: boolean;
   backupBeforeOverwrite?: boolean;

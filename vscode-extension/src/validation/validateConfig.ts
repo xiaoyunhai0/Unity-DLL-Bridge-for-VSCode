@@ -120,6 +120,10 @@ function validateConfigurationShape(value: unknown, prefix: string, result: Vali
   }
 
   requireString(value, 'outputDir', `${prefix}.outputDir`, result);
+  validateOptionalBoolean(value, 'copyAllDlls', `${prefix}.copyAllDlls`, result);
+  validateOptionalBoolean(value, 'copyPdb', `${prefix}.copyPdb`, result);
+  validateOptionalBoolean(value, 'copyXml', `${prefix}.copyXml`, result);
+  validateOptionalBoolean(value, 'backupBeforeOverwrite', `${prefix}.backupBeforeOverwrite`, result);
 
   if (value.dependencies !== undefined) {
     if (!isStringArray(value.dependencies)) {
@@ -161,6 +165,12 @@ function validateBuildShape(value: Record<string, unknown>, result: ValidationRe
 function validateOptionalString(value: Record<string, unknown>, key: string, label: string, result: ValidationResult): void {
   if (value[key] !== undefined && (typeof value[key] !== 'string' || (value[key] as string).trim() === '')) {
     result.errors.push(`${label} 必须是非空字符串。`);
+  }
+}
+
+function validateOptionalBoolean(value: Record<string, unknown>, key: string, label: string, result: ValidationResult): void {
+  if (value[key] !== undefined && typeof value[key] !== 'boolean') {
+    result.errors.push(`${label} 必须是 true 或 false。`);
   }
 }
 

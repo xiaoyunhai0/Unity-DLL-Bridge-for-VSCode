@@ -21,7 +21,7 @@ Unity 只引用 DLL，不直接暴露源码
 VSCode 扩展：
 
 - 在 VSCode 左侧 Activity Bar 提供 `DLL Bridge` 工作台，显示配置状态、错误提醒和项目摘要。
-- 提供中文配置向导：选择 Unity 工程、外部 `.csproj` 或已有 DLL 输出目录后自动生成 `dllbridge.json`。
+- 提供中文配置向导：选择 Unity 工程、外部 C# 工程文件夹、`.csproj` 或已有 DLL 输出文件夹后自动生成 `dllbridge.json`。
 - 生成 `dllbridge.json` 配置模板。
 - 校验 Unity 工程路径、DLL 输出目录和目标插件目录。
 - 支持 Debug / Release 等配置切换。
@@ -89,7 +89,8 @@ Unity DLL Bridge: 配置向导
 向导会让你选择：
 
 - Unity 工程根目录：选择包含 `Assets` 的目录，例如 `E:/Unity/project/project-main/pro`。
-- 外部 C# 项目：优先选择 `.csproj` 文件；如果只想同步已生成 DLL，也可以选择主 DLL。
+- 外部 C# 项目：优先选择源码工程文件夹，向导会在里面找 `.csproj`。`.csproj` 代表整个 C# 项目，会编译很多 `.cs` 文件，不是单个 `.cs` 文件。
+- DLL 输出：如果公司已有构建流程，也可以直接选择包含 DLL 的输出文件夹，从这个文件夹同步到 Unity 目标文件夹。
 - Unity 目标目录：建议使用 `Assets/Plugins/<程序集名>/Runtime`。
 - 构建方式：离线或 Visual Studio 编译场景选“只同步已有 DLL”；安装了 dotnet SDK 时可选 `dotnet build`。
 
@@ -98,6 +99,7 @@ Unity DLL Bridge: 配置向导
 - `assemblyName`
 - `sourceProject`
 - Debug / Release 的 `outputDir`
+- 是否同步输出文件夹中的所有 DLL
 - `targetPluginPath`
 - `build.mode`
 
@@ -151,6 +153,7 @@ C# 工程：E:/Unity/project/gamelib-main/gamelib/GameLogic.csproj
       "configurations": {
         "Debug": {
           "outputDir": "../GameLogic/bin/Debug/netstandard2.1",
+          "copyAllDlls": false,
           "copyPdb": true,
           "copyXml": true,
           "backupBeforeOverwrite": true,
@@ -158,6 +161,7 @@ C# 工程：E:/Unity/project/gamelib-main/gamelib/GameLogic.csproj
         },
         "Release": {
           "outputDir": "../GameLogic/bin/Release/netstandard2.1",
+          "copyAllDlls": false,
           "copyPdb": false,
           "copyXml": false,
           "backupBeforeOverwrite": true,

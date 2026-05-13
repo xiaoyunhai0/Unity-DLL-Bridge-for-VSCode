@@ -33,10 +33,10 @@ checksums.txt
 1. 在 VSCode 中打开目标工作区。
 2. 执行 `Unity DLL Bridge: 配置向导`，或在左侧 `DLL Bridge` 工作台点击 `配置向导`。
 3. 选择 Unity 工程根目录，也就是包含 `Assets` 的目录。
-4. 选择外部 C# 项目文件 `.csproj`。如果离线环境只拿到了 DLL 产物，也可以选择主 DLL 文件。
+4. 选择外部 C# 工程文件夹。向导会在里面查找 `.csproj`，`.csproj` 代表整个 C# 项目，不是单个 `.cs` 文件。如果离线环境只拿到了 DLL 产物，也可以选择 DLL 输出文件夹。
 5. 选择 Unity 目标目录，建议位于 `Assets/Plugins/<程序集名>/Runtime`。
 6. 选择构建方式。离线或 Visual Studio 编译场景选“只同步已有 DLL”；如果离线机器已安装 dotnet SDK，可以选择 `dotnet build`。
-7. 向导会生成 `dllbridge.json`，并自动填写 `unityProject`、`sourceProject`、`assemblyName`、`outputDir` 和 `targetPluginPath`。
+7. 向导会生成 `dllbridge.json`，并自动填写 `unityProject`、`sourceProject`、`assemblyName`、`outputDir`、`copyAllDlls` 和 `targetPluginPath`。
 8. 如需切换 Debug / Release，执行 `Unity DLL Bridge: 选择 Debug/Release 配置`。
 9. 在 VSCode 命令面板执行 `Unity DLL Bridge: 校验配置`。
 10. 如果只想在 VSCode 中构建 DLL，不同步到 Unity，执行 `Unity DLL Bridge: 仅构建 DLL`。
