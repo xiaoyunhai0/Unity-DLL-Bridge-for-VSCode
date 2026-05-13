@@ -17,7 +17,7 @@ export function registerSyncOnlyCommand(context: vscode.ExtensionContext): void 
       const result = await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
-          title: 'Unity DLL Bridge: Sync Only',
+          title: 'Unity DLL Bridge: 仅同步 DLL',
           cancellable: false
         },
         () => syncOnly(resolvedConfig, validation.warnings)

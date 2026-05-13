@@ -20,8 +20,10 @@ export function registerOpenConfigurationCommand(context: vscode.ExtensionContex
       const configPath = await findConfigPath(workspaceFolder.uri.fsPath);
 
       if (!configPath) {
-        const selection = await vscode.window.showWarningMessage('没有找到 dllbridge.json，是否创建配置模板？', '创建', '取消');
-        if (selection === '创建') {
+        const selection = await vscode.window.showWarningMessage('没有找到 dllbridge.json。可以用配置向导自动生成，或创建空模板后手动编辑。', '配置向导', '创建模板', '取消');
+        if (selection === '配置向导') {
+          await vscode.commands.executeCommand('unityDllBridge.configWizard');
+        } else if (selection === '创建模板') {
           await vscode.commands.executeCommand('unityDllBridge.createConfigTemplate');
         }
         return;

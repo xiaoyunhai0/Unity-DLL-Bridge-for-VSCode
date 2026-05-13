@@ -22,7 +22,7 @@ export function registerBuildAndSyncCommand(context: vscode.ExtensionContext): v
       const result = await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
-          title: 'Unity DLL Bridge: Build & Sync',
+          title: 'Unity DLL Bridge: 构建并同步',
           cancellable: false
         },
         async () => {
@@ -57,7 +57,7 @@ export function registerBuildAndSyncCommand(context: vscode.ExtensionContext): v
       vscode.window.showInformationMessage(`DLL Bridge ${buildText}，同步完成：${resolvedConfig.activeConfiguration}${warningSummary}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      vscode.window.showErrorMessage(`DLL Bridge Build & Sync 失败：${message}`);
+      vscode.window.showErrorMessage(`DLL Bridge 构建并同步失败：${message}`);
     }
   });
 

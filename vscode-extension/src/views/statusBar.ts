@@ -19,42 +19,47 @@ export function registerStatusBar(context: vscode.ExtensionContext): StatusBarCo
     const selected = await vscode.window.showQuickPick(
       [
         {
-          label: 'Select Configuration',
+          label: '配置向导',
+          description: '选择 Unity 工程、C# 项目或 DLL 输出目录，自动生成 dllbridge.json',
+          command: 'unityDllBridge.configWizard'
+        },
+        {
+          label: '选择配置',
           description: '选择 Debug / Release 等配置',
           command: 'unityDllBridge.selectConfiguration'
         },
         {
-          label: 'Build & Sync',
+          label: '构建并同步',
           description: '先构建外部 C# 工程，再同步 DLL',
           command: 'unityDllBridge.buildAndSync'
         },
         {
-          label: 'Build DLL Only',
+          label: '仅构建 DLL',
           description: '只执行 dotnet/msbuild/custom 构建，不同步到 Unity',
           command: 'unityDllBridge.buildDllOnly'
         },
         {
-          label: 'Validate Configuration',
+          label: '校验配置',
           description: '检查 dllbridge.json 和路径配置',
           command: 'unityDllBridge.validateConfiguration'
         },
         {
-          label: 'Sync Only',
+          label: '仅同步 DLL',
           description: '复制已有 DLL/PDB/XML 到 Unity 工程',
           command: 'unityDllBridge.syncOnly'
         },
         {
-          label: 'Open Sync Log',
+          label: '打开同步日志',
           description: '打开 .dllbridge/logs/latest.log',
           command: 'unityDllBridge.openSyncLog'
         },
         {
-          label: 'Open Manifest',
+          label: '打开 Manifest',
           description: '打开 Unity 目标目录中的 manifest.json',
           command: 'unityDllBridge.openManifest'
         },
         {
-          label: 'Create Config Template',
+          label: '创建配置模板',
           description: '在工作区生成 dllbridge.json 模板',
           command: 'unityDllBridge.createConfigTemplate'
         }

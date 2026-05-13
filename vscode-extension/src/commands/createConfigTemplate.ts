@@ -28,7 +28,7 @@ export function registerCreateConfigTemplateCommand(context: vscode.ExtensionCon
       const document = await vscode.workspace.openTextDocument(targetPath);
       await vscode.window.showTextDocument(document);
       onDidCreateConfig?.();
-      vscode.window.showInformationMessage('已创建 dllbridge.json，请按你的 Unity 工程和 DLL 输出目录修改路径。');
+      vscode.window.showInformationMessage('已创建 dllbridge.json 模板。若不确定路径该怎么填，可改用 Unity DLL Bridge: 配置向导 自动生成。');
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       vscode.window.showErrorMessage(`创建配置模板失败：${message}`);

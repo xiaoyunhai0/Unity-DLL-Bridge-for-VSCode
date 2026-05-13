@@ -18,11 +18,12 @@ Unity Assets/Plugins
 
 - 左侧 Activity Bar 提供 `DLL Bridge` 工作台，展示配置状态、错误、提醒和项目摘要。
 - 状态栏提供常用操作入口。
+- 提供中文配置向导：选择 Unity 工程、`.csproj` 或已有 DLL 后自动生成 `dllbridge.json`。
 - 生成 `dllbridge.json` 配置模板。
 - 支持 Debug / Release 等配置切换。
-- `Build DLL Only`：只在 VSCode 中调用 `dotnet`、`msbuild` 或自定义命令构建 DLL，不同步到 Unity。
-- `Sync Only`：同步已经由 Visual Studio、Build Tools 或内部工具生成的 DLL/PDB/XML/依赖 DLL。
-- `Build & Sync`：先构建外部 C# 工程，再同步产物到 Unity。
+- `仅构建 DLL`：只在 VSCode 中调用 `dotnet`、`msbuild` 或自定义命令构建 DLL，不同步到 Unity。
+- `仅同步 DLL`：同步已经由 Visual Studio、Build Tools 或内部工具生成的 DLL/PDB/XML/依赖 DLL。
+- `构建并同步`：先构建外部 C# 工程，再同步产物到 Unity。
 - 生成 `manifest.json`，记录同步时间、配置、文件大小和 SHA256。
 - 生成 `.dllbridge/logs/latest.log` 和时间戳日志。
 - 阻止源码复制：不会把 `.cs`、`.csproj`、`.sln`、`.props`、`.targets` 当作产物同步。
@@ -37,39 +38,48 @@ Unity Assets/Plugins
 配置健康状态
 当前配置和项目数量
 错误 / 提醒列表
-编辑配置 / 创建配置
+配置向导 / 编辑配置 / 创建模板
 构建与同步操作
 日志和 manifest 入口
 ```
 
 也可以打开命令面板，搜索 `Unity DLL Bridge` 使用全部命令。
 
-如果还没有 `dllbridge.json`，优先点击左侧 `DLL Bridge` 页面里的 `Create Config Template`。
+如果还没有 `dllbridge.json`，优先点击左侧 `DLL Bridge` 页面里的 `配置向导`。
 如果配置有错误，左侧工作台会显示错误列表，并提供 `编辑配置` 按钮直接打开 `dllbridge.json` 修改。
 
 ## 推荐流程
 
 1. 在 VSCode 中打开外部 C# 工程工作区。
 2. 打开左侧 `DLL Bridge` 插件页面。
-3. 执行 `Create Config Template`。
-4. 修改生成的 `dllbridge.json`。
-5. 执行 `Validate Configuration`。
-6. 根据需要执行 `Build DLL Only`、`Sync Only` 或 `Build & Sync`。
+3. 执行 `配置向导`。
+4. 依次选择 Unity 工程根目录、外部 `.csproj` 或已有 DLL、Unity 目标目录。
+5. 执行 `校验配置`。
+6. 根据需要执行 `仅构建 DLL`、`仅同步 DLL` 或 `构建并同步`。
 7. 回到 Unity 刷新资源，或配合可选 Unity Editor 插件查看 manifest。
+
+向导里路径应该这样选：
+
+```text
+Unity 工程根目录：包含 Assets 的目录
+外部 C# 项目：优先选 .csproj；没有项目文件时选主 DLL
+Unity 目标目录：建议选 Assets/Plugins/<程序集名>/Runtime
+```
 
 ## 命令说明
 
 | 命令 | 作用 |
 |---|---|
-| `Unity DLL Bridge: Create Config Template` | 在当前工作区创建 `dllbridge.json`。 |
-| `Unity DLL Bridge: Select Configuration` | 选择 Debug / Release 或其他配置。 |
-| `Unity DLL Bridge: Validate Configuration` | 校验 Unity 工程路径、输出目录、目标目录和安全配置。 |
-| `Unity DLL Bridge: Open Configuration` | 打开 `dllbridge.json`，即使配置内容有错误也可以直接修改。 |
-| `Unity DLL Bridge: Build DLL Only` | 执行配置的构建命令，不复制文件到 Unity。 |
-| `Unity DLL Bridge: Sync Only` | 将已有 DLL/PDB/XML/依赖 DLL 同步到 Unity。 |
-| `Unity DLL Bridge: Build & Sync` | 先执行构建命令，再同步产物到 Unity。 |
-| `Unity DLL Bridge: Open Sync Log` | 打开 `.dllbridge/logs/latest.log`。 |
-| `Unity DLL Bridge: Open Manifest` | 打开 Unity 目标目录中的 `manifest.json`。 |
+| `Unity DLL Bridge: 配置向导` | 选择 Unity 工程、C# 项目或 DLL 输出目录，自动生成 `dllbridge.json`。 |
+| `Unity DLL Bridge: 创建配置模板` | 在当前工作区创建手写模板。 |
+| `Unity DLL Bridge: 选择 Debug/Release 配置` | 选择 Debug / Release 或其他配置。 |
+| `Unity DLL Bridge: 校验配置` | 校验 Unity 工程路径、输出目录、目标目录和安全配置。 |
+| `Unity DLL Bridge: 打开配置文件` | 打开 `dllbridge.json`，即使配置内容有错误也可以直接修改。 |
+| `Unity DLL Bridge: 仅构建 DLL` | 执行配置的构建命令，不复制文件到 Unity。 |
+| `Unity DLL Bridge: 仅同步 DLL` | 将已有 DLL/PDB/XML/依赖 DLL 同步到 Unity。 |
+| `Unity DLL Bridge: 构建并同步` | 先执行构建命令，再同步产物到 Unity。 |
+| `Unity DLL Bridge: 打开同步日志` | 打开 `.dllbridge/logs/latest.log`。 |
+| `Unity DLL Bridge: 打开 Manifest` | 打开 Unity 目标目录中的 `manifest.json`。 |
 
 ## 配置文件位置
 
@@ -148,7 +158,7 @@ workspace/.dllbridge/dllbridge.json
 }
 ```
 
-配置为 `dotnet` 后，`Build DLL Only` 和 `Build & Sync` 会执行类似命令：
+配置为 `dotnet` 后，`仅构建 DLL` 和 `构建并同步` 会执行类似命令：
 
 ```text
 dotnet build ../GameLogic/GameLogic.csproj -c Debug
@@ -254,7 +264,7 @@ checksums.txt
 `找不到 dllbridge.json`：
 
 - 打开包含 `dllbridge.json` 的工作区。
-- 或在左侧 `DLL Bridge` 页面执行 `Create Config Template`。
+- 或在左侧 `DLL Bridge` 页面执行 `配置向导`，也可以执行 `创建配置模板` 后手动编辑。
 
 `配置有错误但不知道怎么改`：
 
@@ -265,7 +275,7 @@ checksums.txt
 
 `找不到主 DLL`：
 
-- 先构建外部 C# 工程，或使用 `Build DLL Only`。
+- 先构建外部 C# 工程，或使用 `仅构建 DLL`。
 - 检查 `assemblyName` 和当前配置的 `outputDir` 是否匹配真实输出。
 
 `targetPluginPath 必须位于 Assets 内`：
@@ -274,5 +284,5 @@ checksums.txt
 
 `构建命令失败`：
 
-- 执行 `Unity DLL Bridge: Open Sync Log` 查看详细日志。
+- 执行 `Unity DLL Bridge: 打开同步日志` 查看详细日志。
 - 检查当前机器是否安装 `dotnet`、`MSBuild.exe`，或自定义构建脚本是否可运行。

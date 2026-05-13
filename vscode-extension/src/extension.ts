@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { registerBuildAndSyncCommand } from './commands/buildAndSync';
 import { registerBuildDllOnlyCommand } from './commands/buildDllOnly';
+import { registerConfigWizardCommand } from './commands/configWizard';
 import { registerCreateConfigTemplateCommand } from './commands/createConfigTemplate';
 import { registerOpenManifestCommand } from './commands/openManifest';
 import { registerOpenConfigurationCommand } from './commands/openConfiguration';
@@ -21,6 +22,7 @@ export function activate(context: vscode.ExtensionContext): void {
   registerOpenSyncLogCommand(context);
   registerOpenManifestCommand(context);
   registerOpenConfigurationCommand(context);
+  registerConfigWizardCommand(context, () => statusBar.refresh());
   registerCreateConfigTemplateCommand(context, () => statusBar.refresh());
   registerSelectConfigurationCommand(context, () => statusBar.refresh());
 }

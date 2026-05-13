@@ -21,7 +21,7 @@ export function registerBuildDllOnlyCommand(context: vscode.ExtensionContext): v
       const result = await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
-          title: 'Unity DLL Bridge: Build DLL Only',
+          title: 'Unity DLL Bridge: 仅构建 DLL',
           cancellable: false
         },
         async () => {
@@ -59,7 +59,7 @@ export function registerBuildDllOnlyCommand(context: vscode.ExtensionContext): v
       vscode.window.showInformationMessage(`DLL Bridge DLL 构建完成：${resolvedConfig.activeConfiguration}，${result.buildResult.durationMs}ms${warningSummary}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      vscode.window.showErrorMessage(`DLL Bridge Build DLL Only 失败：${message}`);
+      vscode.window.showErrorMessage(`DLL Bridge 仅构建 DLL 失败：${message}`);
     }
   });
 

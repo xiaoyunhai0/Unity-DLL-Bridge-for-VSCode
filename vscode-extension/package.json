@@ -32,6 +32,7 @@
     "onCommand:unityDllBridge.openSyncLog",
     "onCommand:unityDllBridge.openManifest",
     "onCommand:unityDllBridge.openConfiguration",
+    "onCommand:unityDllBridge.configWizard",
     "onCommand:unityDllBridge.createConfigTemplate",
     "onCommand:unityDllBridge.selectConfiguration",
     "onCommand:unityDllBridge.buildDllOnly",
@@ -61,39 +62,43 @@
     "commands": [
       {
         "command": "unityDllBridge.validateConfiguration",
-        "title": "Unity DLL Bridge: Validate Configuration"
+        "title": "Unity DLL Bridge: 校验配置"
       },
       {
         "command": "unityDllBridge.syncOnly",
-        "title": "Unity DLL Bridge: Sync Only"
+        "title": "Unity DLL Bridge: 仅同步 DLL"
       },
       {
         "command": "unityDllBridge.openSyncLog",
-        "title": "Unity DLL Bridge: Open Sync Log"
+        "title": "Unity DLL Bridge: 打开同步日志"
       },
       {
         "command": "unityDllBridge.openManifest",
-        "title": "Unity DLL Bridge: Open Manifest"
+        "title": "Unity DLL Bridge: 打开 Manifest"
       },
       {
         "command": "unityDllBridge.openConfiguration",
-        "title": "Unity DLL Bridge: Open Configuration"
+        "title": "Unity DLL Bridge: 打开配置文件"
+      },
+      {
+        "command": "unityDllBridge.configWizard",
+        "title": "Unity DLL Bridge: 配置向导"
       },
       {
         "command": "unityDllBridge.createConfigTemplate",
-        "title": "Unity DLL Bridge: Create Config Template"
+        "title": "Unity DLL Bridge: 创建配置模板"
       },
       {
         "command": "unityDllBridge.selectConfiguration",
-        "title": "Unity DLL Bridge: Select Configuration"
+        "title": "Unity DLL Bridge: 选择 Debug/Release 配置"
       },
       {
         "command": "unityDllBridge.buildDllOnly",
-        "title": "Unity DLL Bridge: Build DLL Only"
+        "title": "Unity DLL Bridge: 仅构建 DLL"
       },
       {
         "command": "unityDllBridge.buildAndSync",
-        "title": "Unity DLL Bridge: Build & Sync"
+        "title": "Unity DLL Bridge: 构建并同步"
       }
     ],
     "menus": {

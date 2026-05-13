@@ -468,13 +468,15 @@ function renderDashboard(webview: vscode.Webview, state: DashboardState): string
 function getPrimaryActions(state: DashboardState): DashboardAction[] {
   if (state.status === 'missing') {
     return [
-      { label: '创建配置', command: 'unityDllBridge.createConfigTemplate', variant: 'primary' },
+      { label: '配置向导', command: 'unityDllBridge.configWizard', variant: 'primary' },
+      { label: '创建模板', command: 'unityDllBridge.createConfigTemplate' },
       { label: '刷新面板', command: 'unityDllBridge.refreshActionsView' }
     ];
   }
 
   return [
     { label: '编辑配置', command: 'unityDllBridge.openConfiguration', variant: state.status === 'error' ? 'danger' : 'primary' },
+    { label: '重新生成配置', command: 'unityDllBridge.configWizard' },
     { label: '重新校验', command: 'unityDllBridge.validateConfiguration' },
     { label: '刷新面板', command: 'unityDllBridge.refreshActionsView' }
   ];
