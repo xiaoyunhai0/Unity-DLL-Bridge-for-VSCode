@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag, for example v0.1.0'
+        required: true
+        default: 'v0.1.0'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and upload release artifacts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve tag
+        id: release_tag
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: vscode-extension/package-lock.json
+
+      - name: Install VSCode extension dependencies
+        working-directory: vscode-extension
+        run: npm ci
+
+      - name: Build release artifacts
+        working-directory: vscode-extension
+        run: npm run release:local
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_tag.outputs.tag }}
+          name: ${{ steps.release_tag.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          fail_on_unmatched_files: true
+          make_latest: true
+          files: |
+            releases/UnityDllBridge-VSCode-*.vsix
+            releases/UnityDllBridge-Templates-*.zip
+            releases/UnityDllBridge-UnityPlugin-*.zip
+            releases/README-offline-install.md
+            releases/checksums.txt
+          body: |
+            ## Unity DLL Bridge ${{ steps.release_tag.outputs.tag }}
+
+            离线环境请下载 `UnityDllBridge-VSCode-*.vsix` 安装 VSCode 扩展。
+
+            同时可下载：
+
+            - `UnityDllBridge-UnityPlugin-*.zip`
+            - `UnityDllBridge-Templates-*.zip`
+            - `README-offline-install.md`
+            - `checksums.txt`
