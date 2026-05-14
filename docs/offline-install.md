@@ -41,13 +41,15 @@ checksums.txt
 9. 如需把外部 `.csproj` 加入 Unity 自动生成的 `.sln`，执行 `Unity DLL Bridge: 添加工程到 Unity 解决方案`。
 10. 如需切换 Debug / Release，执行 `Unity DLL Bridge: 选择 Debug/Release 配置`。
 11. 在 VSCode 命令面板执行 `Unity DLL Bridge: 校验配置`。
-12. 如果只想在 VSCode 中构建 DLL，不同步到 Unity，执行 `Unity DLL Bridge: 仅构建 DLL`。
-13. 如果 DLL 已经由 Visual Studio 或内部工具编译好，执行 `Unity DLL Bridge: 仅同步 DLL`。
-14. 如果已配置 `build.mode` 为 `dotnet`、`msbuild` 或 `custom`，并希望构建后同步，执行 `Unity DLL Bridge: 构建并同步`。
-15. 如需查看构建或同步日志，执行 `Unity DLL Bridge: 打开同步日志`。
-16. 如需查看生成的 DLL 版本信息，执行 `Unity DLL Bridge: 打开 Manifest`。
+12. 如果不知道路径是否正确，执行 `Unity DLL Bridge: 自动发现项目` 或 `Unity DLL Bridge: 一键诊断环境`。
+13. 如果只想在 VSCode 中构建 DLL，不同步到 Unity，执行 `Unity DLL Bridge: 仅构建 DLL`。
+14. 如果 DLL 已经由 Visual Studio 或内部工具编译好，执行 `Unity DLL Bridge: 仅同步 DLL`。
+15. 如果已配置 `build.mode` 为 `dotnet`、`msbuild` 或 `custom`，并希望构建后同步，执行 `Unity DLL Bridge: 构建并同步`。
+16. 多项目场景可执行 `Unity DLL Bridge: 批量构建并同步`。
+17. 如需查看构建或同步日志，执行 `Unity DLL Bridge: 打开同步日志`。
+18. 如需查看生成的 DLL 版本信息，执行 `Unity DLL Bridge: 打开 Manifest`。
 
-手动模板仍然可用：执行 `Unity DLL Bridge: 创建配置模板`，或从模板包中复制 `dllbridge.single.json`，重命名为 `dllbridge.json` 后放到工作区根目录。
+手动模板仍然可用：执行 `Unity DLL Bridge: 创建配置模板`，或从模板包中复制 `dllbridge.single.json`、`dllbridge.dotnet.json`、`dllbridge.msbuild.json`、`dllbridge.multi.json`，重命名为 `dllbridge.json` 后放到工作区根目录。
 
 安装扩展后，VSCode 状态栏会显示 `DLL Bridge` 或 `DLL Bridge: Debug`，点击后可以选择常用操作。
 如果还没有 `dllbridge.json`，优先使用左侧 `DLL Bridge` 插件页面里的 `配置向导`。
@@ -65,7 +67,9 @@ checksums.txt
 
 - 默认使用 `syncOnly`，请先使用 Visual Studio、Build Tools 或公司内部工具生成 DLL。
 - `添加工程到 Unity 解决方案` 需要离线机器能运行 `dotnet sln`。扩展会自动查找 dotnet；如果找不到，请执行 `Unity DLL Bridge: 配置 dotnet 路径`。
-- 如需让扩展内部触发构建，可以配置 `build.mode` 为 `dotnet`、`msbuild` 或 `custom`，再执行 `仅构建 DLL` 或 `构建并同步`。
+- 如需让扩展内部触发构建，可以配置 `build.mode` 为 `dotnet`、`msbuild` 或 `custom`，再执行 `仅构建 DLL` 或 `构建并同步`。`msbuildPath: auto` 会自动查找 Visual Studio Build Tools / MSBuild 常见安装目录。
+- 构建失败时，错误会进入 VSCode Problems 面板，能点击跳转源码行。
+- 可执行 `Unity DLL Bridge: 生成 Unity 调试配置` 创建 `.vscode/launch.json` 的 Unity Editor 附加调试入口。
 - 默认不会复制 `.cs`、`.csproj`、`.sln` 等源码文件。
 - 同步日志写入当前工作区 `.dllbridge/logs/`，该目录不需要提交到 Git。
 - `manifest.json` 会写入 Unity 目标插件目录，用于记录当前 DLL、PDB、XML 和依赖 DLL 的 hash。

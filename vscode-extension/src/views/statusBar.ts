@@ -34,9 +34,29 @@ export function registerStatusBar(context: vscode.ExtensionContext): StatusBarCo
           command: 'unityDllBridge.buildAndSync'
         },
         {
+          label: '批量构建并同步',
+          description: '构建后同步配置中的所有 DLL 项目',
+          command: 'unityDllBridge.buildAllProjects'
+        },
+        {
+          label: '一键诊断环境',
+          description: '检查 Unity、.sln、.csproj、dotnet、MSBuild 和 DLL/PDB',
+          command: 'unityDllBridge.runEnvironmentDiagnostics'
+        },
+        {
+          label: '自动发现项目',
+          description: '扫描附近 Unity 工程、C# 工程和 DLL 输出目录',
+          command: 'unityDllBridge.discoverProjects'
+        },
+        {
           label: '添加工程到 Unity 解决方案',
           description: '把外部 .csproj 加入 Unity 生成的 .sln',
           command: 'unityDllBridge.addProjectToUnitySolution'
+        },
+        {
+          label: '打开 Unity 解决方案',
+          description: '自动查找并打开 Unity 生成的 .sln',
+          command: 'unityDllBridge.openUnitySolution'
         },
         {
           label: '配置 dotnet 路径',
@@ -47,6 +67,16 @@ export function registerStatusBar(context: vscode.ExtensionContext): StatusBarCo
           label: '仅构建 DLL',
           description: '只执行 dotnet/msbuild/custom 构建，不同步到 Unity',
           command: 'unityDllBridge.buildDllOnly'
+        },
+        {
+          label: '开关自动构建同步',
+          description: '监听外部 C# 源码变化后自动构建并同步',
+          command: 'unityDllBridge.toggleAutoBuild'
+        },
+        {
+          label: '生成 Unity 调试配置',
+          description: '生成 .vscode/launch.json 的 Unity Editor 附加调试入口',
+          command: 'unityDllBridge.generateDebugConfig'
         },
         {
           label: '校验配置',

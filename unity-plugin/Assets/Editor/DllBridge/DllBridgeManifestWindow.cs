@@ -71,6 +71,7 @@ namespace UnityDllBridge.Editor
             {
                 DrawSummary("Manifests", manifests.Count.ToString());
                 DrawSummary("Files", CountFiles().ToString());
+                DrawSummary("PDB", CountPdbFiles().ToString());
                 DrawSummary("Errors", CountErrors().ToString());
             }
 
@@ -149,10 +150,15 @@ namespace UnityDllBridge.Editor
             DrawValue("Sync Time", manifest.SyncTime);
             DrawValue("Source Project", manifest.SourceProject);
             DrawValue("Target", manifest.TargetPath);
+            DrawValue("PDB", manifest.HasPdb ? "Present" : "Missing");
 
             if (!string.IsNullOrEmpty(manifest.Error))
             {
                 EditorGUILayout.HelpBox(manifest.Error, MessageType.Warning);
+            }
+            else if (!manifest.MainDllExists)
+            {
+                EditorGUILayout.HelpBox("Main DLL file listed in manifest is missing from this folder.", MessageType.Warning);
             }
 
             using (new EditorGUILayout.HorizontalScope())
@@ -165,6 +171,11 @@ namespace UnityDllBridge.Editor
                 if (GUILayout.Button("Reveal", GUILayout.Width(80)))
                 {
                     EditorUtility.RevealInFinder(manifest.FullPath);
+                }
+
+                if (GUILayout.Button("Open Folder", GUILayout.Width(96)))
+                {
+                    EditorUtility.RevealInFinder(Path.GetDirectoryName(manifest.FullPath));
                 }
             }
 
@@ -262,6 +273,21 @@ namespace UnityDllBridge.Editor
             return count;
         }
 
+        private int CountPdbFiles()
+        {
+            var count = 0;
+
+            foreach (var manifest in manifests)
+            {
+                if (manifest.HasPdb)
+                {
+                    count += 1;
+                }
+            }
+
+            return count;
+        }
+
         private static void OpenFile(string path)
         {
             if (!File.Exists(path))
@@ -328,6 +354,8 @@ namespace UnityDllBridge.Editor
             public string TargetPath;
             public string Error;
             public string FullPath;
+            public bool HasPdb;
+            public bool MainDllExists;
             public readonly List<ManifestFile> Files = new List<ManifestFile>();
 
             public static ManifestInfo Load(string manifestPath)
@@ -352,6 +380,10 @@ namespace UnityDllBridge.Editor
                     {
                         info.Files.AddRange(manifest.files);
                     }
+
+                    var manifestDirectory = Path.GetDirectoryName(manifestPath);
+                    info.HasPdb = info.Files.Exists(file => file.name != null && file.name.EndsWith(".pdb", StringComparison.OrdinalIgnoreCase));
+                    info.MainDllExists = !string.IsNullOrEmpty(manifest.assemblyName) && File.Exists(Path.Combine(manifestDirectory, manifest.assemblyName));
                 }
                 catch (Exception exception)
                 {

@@ -77,11 +77,27 @@ function validateShape(value: unknown, result: ValidationResult): BridgeConfig |
     }
   }
 
+  if (value.watch !== undefined) {
+    if (!isPlainObject(value.watch)) {
+      result.errors.push('watch 必须是 JSON object。');
+    } else {
+      validateWatchShape(value.watch, result);
+    }
+  }
+
   if (!isPlainObject(value.privacy) || value.privacy.hideAbsolutePathsInManifest !== true) {
     result.warnings.push('建议开启 privacy.hideAbsolutePathsInManifest，避免 manifest 暴露开发机绝对路径。');
   }
 
   return value as unknown as BridgeConfig;
+}
+
+function validateWatchShape(value: Record<string, unknown>, result: ValidationResult): void {
+  validateOptionalBoolean(value, 'enabled', 'watch.enabled', result);
+
+  if (value.debounceSeconds !== undefined && (!Number.isFinite(value.debounceSeconds) || Number(value.debounceSeconds) <= 0)) {
+    result.errors.push('watch.debounceSeconds 必须是大于 0 的数字。');
+  }
 }
 
 function validateProjectShape(value: unknown, index: number, result: ValidationResult): void {

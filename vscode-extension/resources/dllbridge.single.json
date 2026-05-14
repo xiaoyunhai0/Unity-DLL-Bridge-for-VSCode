@@ -7,6 +7,10 @@
     "mode": "syncOnly",
     "timeoutSeconds": 120
   },
+  "watch": {
+    "enabled": false,
+    "debounceSeconds": 2
+  },
   "privacy": {
     "hideAbsolutePathsInManifest": true
   },

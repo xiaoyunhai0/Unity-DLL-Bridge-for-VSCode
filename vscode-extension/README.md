@@ -20,12 +20,18 @@ Unity Assets/Plugins
 - 状态栏提供常用操作入口。
 - 提供中文配置向导：选择 Unity 工程、外部 C# 工程文件夹、`.csproj` 或已有 DLL 输出文件夹后自动生成 `dllbridge.json`。
 - 自动检测 dotnet：构建和添加解决方案时会检查 PATH、`DOTNET_ROOT` 和常见安装目录；检测不到时可在 VSCode 中选择 dotnet 安装文件夹。
+- 一键诊断 Unity、`.sln`、`.csproj`、dotnet、MSBuild、DLL/PDB 环境。
+- 自动发现附近 Unity 工程、C# 工程和 DLL 输出目录。
 - 支持把外部 `.csproj` 加入 Unity 自动生成的 `.sln`，对应 Visual Studio 的“添加现有项目”。
-- 生成 `dllbridge.json` 配置模板。
+- 支持打开 Unity 生成的 `.sln`。
+- 生成多种 `dllbridge.json` 配置模板：只同步、dotnet、MSBuild、多项目。
 - 支持 Debug / Release 等配置切换。
 - `仅构建 DLL`：只在 VSCode 中调用 `dotnet`、`msbuild` 或自定义命令构建 DLL，不同步到 Unity。
 - `仅同步 DLL`：同步已经由 Visual Studio、Build Tools 或内部工具生成的 DLL/PDB/XML/依赖 DLL。
 - `构建并同步`：先构建外部 C# 工程，再同步产物到 Unity。
+- 构建错误进入 VSCode Problems 面板，点击跳转源码行。
+- 可监听外部 C# 源码变化后自动构建并同步。
+- 可生成 Unity Editor 附加调试配置。
 - 生成 `manifest.json`，记录同步时间、配置、文件大小和 SHA256。
 - 生成 `.dllbridge/logs/latest.log` 和时间戳日志。
 - 阻止源码复制：不会把 `.cs`、`.csproj`、`.sln`、`.props`、`.targets` 当作产物同步。
@@ -42,6 +48,7 @@ Unity Assets/Plugins
 错误 / 提醒列表
 配置向导 / 编辑配置 / 创建模板
 添加工程到解决方案 / 构建与同步操作
+一键诊断 / 自动发现 / 调试配置
 日志和 manifest 入口
 ```
 
@@ -57,10 +64,11 @@ Unity Assets/Plugins
 3. 执行 `配置向导`。
 4. 依次选择 Unity 工程根目录、外部 C# 工程文件夹或已有 DLL 输出文件夹、Unity 目标目录。
 5. 如需让 Unity `.sln` 像 Visual Studio 一样显示外部项目，执行 `添加工程到 Unity 解决方案`。
-6. 如果选择了 `dotnet build` 且机器没有配置 PATH，执行 `配置 dotnet 路径`，选择 dotnet 安装文件夹。
-7. 执行 `校验配置`。
-8. 根据需要执行 `仅构建 DLL`、`仅同步 DLL` 或 `构建并同步`。
-9. 回到 Unity 刷新资源，或配合可选 Unity Editor 插件查看 manifest。
+6. 如果不知道路径是否正确，执行 `自动发现项目` 或 `一键诊断环境`。
+7. 如果选择了 `dotnet build` 且机器没有配置 PATH，执行 `配置 dotnet 路径`，选择 dotnet 安装文件夹。
+8. 执行 `校验配置`。
+9. 根据需要执行 `仅构建 DLL`、`仅同步 DLL`、`构建并同步` 或 `批量构建并同步`。
+10. 回到 Unity 刷新资源，或配合可选 Unity Editor 插件查看 manifest。
 
 向导里路径应该这样选：
 
@@ -78,6 +86,9 @@ Unity 目标目录：建议选 Assets/Plugins/<程序集名>/Runtime
 | `Unity DLL Bridge: 配置向导` | 选择 Unity 工程、C# 工程文件夹或 DLL 输出文件夹，自动生成 `dllbridge.json`。 |
 | `Unity DLL Bridge: 创建配置模板` | 在当前工作区创建手写模板。 |
 | `Unity DLL Bridge: 添加工程到 Unity 解决方案` | 将外部 `.csproj` 加入 Unity 自动生成的 `.sln`。 |
+| `Unity DLL Bridge: 打开 Unity 解决方案` | 自动查找并打开 Unity 生成的 `.sln`。 |
+| `Unity DLL Bridge: 自动发现项目` | 扫描附近 Unity 工程、C# 工程、解决方案和 DLL 输出目录。 |
+| `Unity DLL Bridge: 一键诊断环境` | 生成环境诊断报告，检查 Unity、dotnet、MSBuild、DLL/PDB 等。 |
 | `Unity DLL Bridge: 配置 dotnet 路径` | 自动检测失败时，选择 dotnet 安装文件夹或可执行文件。 |
 | `Unity DLL Bridge: 选择 Debug/Release 配置` | 选择 Debug / Release 或其他配置。 |
 | `Unity DLL Bridge: 校验配置` | 校验 Unity 工程路径、输出目录、目标目录和安全配置。 |
@@ -85,6 +96,9 @@ Unity 目标目录：建议选 Assets/Plugins/<程序集名>/Runtime
 | `Unity DLL Bridge: 仅构建 DLL` | 执行配置的构建命令，不复制文件到 Unity。 |
 | `Unity DLL Bridge: 仅同步 DLL` | 将已有 DLL/PDB/XML/依赖 DLL 同步到 Unity。 |
 | `Unity DLL Bridge: 构建并同步` | 先执行构建命令，再同步产物到 Unity。 |
+| `Unity DLL Bridge: 批量构建并同步` | 构建后同步配置中的所有 DLL 项目。 |
+| `Unity DLL Bridge: 开关自动构建同步` | 监听外部 C# 源码变化后自动构建并同步。 |
+| `Unity DLL Bridge: 生成 Unity 调试配置` | 生成 `.vscode/launch.json` 的 Unity Editor 附加调试入口。 |
 | `Unity DLL Bridge: 打开同步日志` | 打开 `.dllbridge/logs/latest.log`。 |
 | `Unity DLL Bridge: 打开 Manifest` | 打开 Unity 目标目录中的 `manifest.json`。 |
 
@@ -103,6 +117,24 @@ dotnet sln <Unity.sln> add <gamelib.csproj>
 ```
 
 Visual Studio 的“生成后事件复制 DLL/PDB”对应本扩展的 `构建并同步`。`copyPdb: true` 会同步 PDB，便于调试。
+
+## 诊断与自动发现
+
+不知道该选择哪个目录时，先执行：
+
+```text
+Unity DLL Bridge: 自动发现项目
+```
+
+它会生成 `.dllbridge/discovery-report.md`，列出附近的 Unity 工程、`.csproj`、`.sln` 和 DLL 输出目录。
+
+出错时执行：
+
+```text
+Unity DLL Bridge: 一键诊断环境
+```
+
+它会生成 `.dllbridge/environment-report.md`，检查 Unity 工程、Assets、`.sln`、`.csproj`、dotnet、MSBuild、主 DLL、PDB 和 VS PostBuildEvent，并给出中文建议。
 
 ## 配置文件位置
 
@@ -210,6 +242,8 @@ Unity DLL Bridge: 配置 dotnet 路径
 }
 ```
 
+`msbuildPath` 为 `auto` 时，扩展会自动查找 Visual Studio Build Tools / MSBuild 常见安装目录；非 Windows 环境会尝试 `dotnet msbuild`。
+
 使用自定义命令：
 
 ```json
@@ -224,6 +258,21 @@ Unity DLL Bridge: 配置 dotnet 路径
 ```
 
 `{configuration}` 会被替换为当前选择的配置，例如 `Debug` 或 `Release`。
+
+## 自动构建
+
+可以在配置中开启源码变化后自动构建并同步：
+
+```json
+{
+  "watch": {
+    "enabled": true,
+    "debounceSeconds": 2
+  }
+}
+```
+
+也可以执行 `Unity DLL Bridge: 开关自动构建同步` 临时开关。自动构建只监听 `sourceProject` 所在目录下的 `.cs` 文件变化。
 
 ## 生成文件
 

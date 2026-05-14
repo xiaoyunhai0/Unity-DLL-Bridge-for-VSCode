@@ -11,6 +11,7 @@ export interface BridgeConfig {
   unityProject: string;
   defaultConfiguration: string;
   build?: BridgeBuildConfig;
+  watch?: BridgeWatchConfig;
   privacy?: {
     hideAbsolutePathsInManifest?: boolean;
   };
@@ -45,6 +46,11 @@ export interface BridgeProjectConfiguration {
   copyXml?: boolean;
   backupBeforeOverwrite?: boolean;
   dependencies?: string[];
+}
+
+export interface BridgeWatchConfig {
+  enabled?: boolean;
+  debounceSeconds?: number;
 }
 
 export interface ValidationResult {

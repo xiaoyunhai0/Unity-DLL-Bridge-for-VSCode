@@ -1,8 +1,11 @@
 import * as cp from 'child_process';
 import * as path from 'path';
+import * as vscode from 'vscode';
 import { BridgeBuildConfig, ResolvedBridgeConfig } from '../config/types';
 import { resolveDotnetCommand, shouldUseShell } from '../dotnet/dotnetLocator';
+import { resolveMsbuildCommand } from '../msbuild/msbuildLocator';
 import { resolveConfigPath } from '../utils/pathUtils';
+import { BuildProblem, parseBuildProblems, publishBuildProblems } from './problemMatcher';
 
 export interface BuildResult {
   skipped: boolean;
@@ -11,10 +14,11 @@ export interface BuildResult {
   command?: string;
   args: string[];
   lines: string[];
+  problems: BuildProblem[];
   durationMs: number;
 }
 
-export async function runBuild(resolvedConfig: ResolvedBridgeConfig): Promise<BuildResult> {
+export async function runBuild(resolvedConfig: ResolvedBridgeConfig, diagnostics?: vscode.DiagnosticCollection): Promise<BuildResult> {
   const startedAt = Date.now();
   const build = resolvedConfig.config.build ?? { mode: 'syncOnly' };
   const mode = build.mode ?? 'syncOnly';
@@ -25,6 +29,7 @@ export async function runBuild(resolvedConfig: ResolvedBridgeConfig): Promise<Bu
       success: true,
       args: [],
       lines: ['Build skipped: build.mode is syncOnly.'],
+      problems: [],
       durationMs: Date.now() - startedAt
     };
   }
@@ -39,6 +44,10 @@ export async function runBuild(resolvedConfig: ResolvedBridgeConfig): Promise<Bu
   }
 
   const result = await runProcess(commandLine.command, commandLine.args, resolvedConfig.configDir, build.timeoutSeconds ?? 120, lines);
+  const problems = parseBuildProblems(lines, resolvedConfig.configDir);
+  if (diagnostics) {
+    publishBuildProblems(diagnostics, problems);
+  }
 
   return {
     skipped: false,
@@ -47,6 +56,7 @@ export async function runBuild(resolvedConfig: ResolvedBridgeConfig): Promise<Bu
     command: commandLine.command,
     args: commandLine.args,
     lines,
+    problems,
     durationMs: Date.now() - startedAt
   };
 }
@@ -66,9 +76,11 @@ async function getBuildCommand(build: BridgeBuildConfig, resolvedConfig: Resolve
 
   if (mode === 'msbuild') {
     const projectOrSolution = build.projectPath ?? build.solutionPath ?? firstSourceProject(resolvedConfig);
+    const msbuild = await resolveMsbuildCommand(resolvedConfig.configDir, build.msbuildPath);
     return {
-      command: build.msbuildPath && build.msbuildPath !== 'auto' ? build.msbuildPath : 'MSBuild.exe',
-      args: [resolveConfigPath(resolvedConfig.configDir, projectOrSolution), `/p:Configuration=${resolvedConfig.activeConfiguration}`]
+      command: msbuild.command,
+      args: [...(msbuild.argsPrefix ?? []), resolveConfigPath(resolvedConfig.configDir, projectOrSolution), `/p:Configuration=${resolvedConfig.activeConfiguration}`],
+      note: `MSBuild: ${msbuild.label}${msbuild.version ? ` (${msbuild.version})` : ''}`
     };
   }
 

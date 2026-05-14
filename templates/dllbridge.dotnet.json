@@ -4,7 +4,8 @@
   "unityProject": "../UnityClient",
   "defaultConfiguration": "Debug",
   "build": {
-    "mode": "syncOnly",
+    "mode": "dotnet",
+    "projectPath": "../GameLogic/GameLogic.csproj",
     "timeoutSeconds": 120
   },
   "watch": {

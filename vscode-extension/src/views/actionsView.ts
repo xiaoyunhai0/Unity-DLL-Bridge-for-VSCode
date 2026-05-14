@@ -216,12 +216,18 @@ function renderDashboard(webview: vscode.Webview, state: DashboardState): string
   const primaryActions = getPrimaryActions(state);
   const buildActions: DashboardAction[] = [
     { label: '添加工程到解决方案', command: 'unityDllBridge.addProjectToUnitySolution' },
+    { label: '打开 Unity 解决方案', command: 'unityDllBridge.openUnitySolution' },
     { label: '配置 dotnet 路径', command: 'unityDllBridge.configureDotnetPath' },
     { label: '仅构建 DLL', command: 'unityDllBridge.buildDllOnly', variant: 'primary' },
     { label: '构建并同步', command: 'unityDllBridge.buildAndSync', variant: 'primary' },
+    { label: '批量构建并同步', command: 'unityDllBridge.buildAllProjects', variant: 'primary' },
+    { label: '开关自动构建', command: 'unityDllBridge.toggleAutoBuild' },
     { label: '仅同步', command: 'unityDllBridge.syncOnly' }
   ];
   const inspectActions: DashboardAction[] = [
+    { label: '一键诊断环境', command: 'unityDllBridge.runEnvironmentDiagnostics', variant: 'primary' },
+    { label: '自动发现项目', command: 'unityDllBridge.discoverProjects' },
+    { label: '生成调试配置', command: 'unityDllBridge.generateDebugConfig' },
     { label: '选择配置', command: 'unityDllBridge.selectConfiguration' },
     { label: '打开日志', command: 'unityDllBridge.openSyncLog' },
     { label: '打开 Manifest', command: 'unityDllBridge.openManifest' }

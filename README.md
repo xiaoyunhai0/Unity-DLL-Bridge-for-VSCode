@@ -22,13 +22,19 @@ VSCode 扩展：
 
 - 在 VSCode 左侧 Activity Bar 提供 `DLL Bridge` 工作台，显示配置状态、错误提醒和项目摘要。
 - 提供中文配置向导：选择 Unity 工程、外部 C# 工程文件夹、`.csproj` 或已有 DLL 输出文件夹后自动生成 `dllbridge.json`。
-- 生成 `dllbridge.json` 配置模板。
+- 生成多种 `dllbridge.json` 配置模板：只同步、dotnet、MSBuild、多项目。
 - 校验 Unity 工程路径、DLL 输出目录和目标插件目录。
+- 一键诊断 Unity、`.sln`、`.csproj`、dotnet、MSBuild、DLL/PDB 环境。
+- 自动发现附近 Unity 工程、C# 工程和 DLL 输出目录。
 - 支持把外部 `.csproj` 加入 Unity 自动生成的 `.sln`，对应 Visual Studio 的“添加现有项目”。
+- 支持打开 Unity 生成的 `.sln`。
 - 支持 Debug / Release 等配置切换。
 - 支持 `仅同步 DLL`：同步已经存在的 DLL/PDB/XML/依赖 DLL。
 - 支持 `仅构建 DLL`：在 VSCode 中调用 `dotnet`、`msbuild` 或自定义命令，只构建 DLL。
 - 支持 `构建并同步`：调用 `dotnet`、`msbuild` 或自定义命令后同步。
+- 支持构建错误进入 VSCode Problems 面板，点击跳转源码行。
+- 支持监听外部 C# 源码变化后自动构建并同步。
+- 支持生成 Unity Editor 附加调试配置。
 - 生成 `manifest.json`，记录 DLL hash、大小、配置和同步时间。
 - 生成 `.dllbridge/logs/latest.log` 和时间戳日志。
 - 提供状态栏 `DLL Bridge` 快捷入口。
@@ -119,6 +125,8 @@ Unity DLL Bridge: 创建配置模板
 UnityDllBridge-Templates-<version>.zip
 ```
 
+模板包包含 `dllbridge.single.json`、`dllbridge.dotnet.json`、`dllbridge.msbuild.json` 和 `dllbridge.multi.json`。
+
 ### 3. 配置示例
 
 向导会生成类似下面的配置。你的目录如果是：
@@ -183,9 +191,15 @@ C# 工程：E:/Unity/project/gamelib-main/gamelib/GameLogic.csproj
 Unity DLL Bridge: 选择 Debug/Release 配置
 Unity DLL Bridge: 校验配置
 Unity DLL Bridge: 添加工程到 Unity 解决方案
+Unity DLL Bridge: 打开 Unity 解决方案
+Unity DLL Bridge: 一键诊断环境
+Unity DLL Bridge: 自动发现项目
 Unity DLL Bridge: 仅构建 DLL
 Unity DLL Bridge: 仅同步 DLL
 Unity DLL Bridge: 构建并同步
+Unity DLL Bridge: 批量构建并同步
+Unity DLL Bridge: 开关自动构建同步
+Unity DLL Bridge: 生成 Unity 调试配置
 Unity DLL Bridge: 打开同步日志
 Unity DLL Bridge: 打开 Manifest
 ```
@@ -208,6 +222,10 @@ dotnet sln project.sln add gamelib.csproj
 ```
 
 添加到 `.sln` 只是为了让 IDE 视图更接近 Visual Studio；实际 DLL/PDB 复制仍由 `构建并同步` 或 `仅同步 DLL` 负责。
+
+如果不知道该选哪个文件夹，先执行 `Unity DLL Bridge: 自动发现项目`。它会生成 `.dllbridge/discovery-report.md`，列出附近的 Unity 工程、`.csproj`、`.sln` 和 DLL 输出目录。
+
+如果配置、构建或同步出问题，执行 `Unity DLL Bridge: 一键诊断环境`。它会生成 `.dllbridge/environment-report.md`，检查 Unity 工程、Assets、`.sln`、`.csproj`、dotnet、MSBuild、主 DLL、PDB 和 VS PostBuildEvent，并给出中文建议。
 
 ## 构建模式
 
@@ -267,6 +285,8 @@ Unity DLL Bridge: 配置 dotnet 路径
 }
 ```
 
+`msbuildPath` 为 `auto` 时，扩展会自动查找 Visual Studio Build Tools / MSBuild 常见安装目录；非 Windows 环境会尝试 `dotnet msbuild`。
+
 `custom`：
 
 ```json
@@ -281,6 +301,27 @@ Unity DLL Bridge: 配置 dotnet 路径
 ```
 
 `{configuration}` 会被替换成当前选择的配置，例如 `Debug` 或 `Release`。
+
+## 自动构建
+
+可以在配置中开启源码变化后自动构建并同步：
+
+```json
+{
+  "watch": {
+    "enabled": true,
+    "debounceSeconds": 2
+  }
+}
+```
+
+也可以通过命令临时开关：
+
+```text
+Unity DLL Bridge: 开关自动构建同步
+```
+
+自动构建会监听 `sourceProject` 所在目录下的 `.cs` 文件变化，防止无关文件触发构建。
 
 ## Unity 插件
 

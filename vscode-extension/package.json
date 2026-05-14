@@ -34,11 +34,17 @@
     "onCommand:unityDllBridge.openConfiguration",
     "onCommand:unityDllBridge.addProjectToUnitySolution",
     "onCommand:unityDllBridge.configureDotnetPath",
+    "onCommand:unityDllBridge.openUnitySolution",
+    "onCommand:unityDllBridge.discoverProjects",
+    "onCommand:unityDllBridge.runEnvironmentDiagnostics",
+    "onCommand:unityDllBridge.generateDebugConfig",
+    "onCommand:unityDllBridge.toggleAutoBuild",
     "onCommand:unityDllBridge.configWizard",
     "onCommand:unityDllBridge.createConfigTemplate",
     "onCommand:unityDllBridge.selectConfiguration",
     "onCommand:unityDllBridge.buildDllOnly",
-    "onCommand:unityDllBridge.buildAndSync"
+    "onCommand:unityDllBridge.buildAndSync",
+    "onCommand:unityDllBridge.buildAllProjects"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -91,6 +97,26 @@
         "title": "Unity DLL Bridge: 配置 dotnet 路径"
       },
       {
+        "command": "unityDllBridge.openUnitySolution",
+        "title": "Unity DLL Bridge: 打开 Unity 解决方案"
+      },
+      {
+        "command": "unityDllBridge.discoverProjects",
+        "title": "Unity DLL Bridge: 自动发现项目"
+      },
+      {
+        "command": "unityDllBridge.runEnvironmentDiagnostics",
+        "title": "Unity DLL Bridge: 一键诊断环境"
+      },
+      {
+        "command": "unityDllBridge.generateDebugConfig",
+        "title": "Unity DLL Bridge: 生成 Unity 调试配置"
+      },
+      {
+        "command": "unityDllBridge.toggleAutoBuild",
+        "title": "Unity DLL Bridge: 开关自动构建同步"
+      },
+      {
         "command": "unityDllBridge.configWizard",
         "title": "Unity DLL Bridge: 配置向导"
       },
@@ -109,6 +135,10 @@
       {
         "command": "unityDllBridge.buildAndSync",
         "title": "Unity DLL Bridge: 构建并同步"
+      },
+      {
+        "command": "unityDllBridge.buildAllProjects",
+        "title": "Unity DLL Bridge: 批量构建并同步"
       }
     ],
     "menus": {

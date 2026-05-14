@@ -1,6 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { CONFIG_TEMPLATES } from '../templates/configTemplates';
 import { fileExists } from '../utils/pathUtils';
 
 export function registerCreateConfigTemplateCommand(context: vscode.ExtensionContext, onDidCreateConfig?: () => void): void {
@@ -22,7 +23,19 @@ export function registerCreateConfigTemplateCommand(context: vscode.ExtensionCon
         }
       }
 
-      const template = await fs.readFile(context.asAbsolutePath(path.join('resources', 'dllbridge.single.json')), 'utf8');
+      const selectedTemplate = await vscode.window.showQuickPick(
+        CONFIG_TEMPLATES.map((template) => ({
+          label: template.label,
+          description: template.description,
+          template
+        })),
+        { placeHolder: '选择要创建的配置模板' }
+      );
+      if (!selectedTemplate) {
+        return;
+      }
+
+      const template = `${selectedTemplate.template.content}\n`;
       await fs.writeFile(targetPath, template, 'utf8');
 
       const document = await vscode.workspace.openTextDocument(targetPath);

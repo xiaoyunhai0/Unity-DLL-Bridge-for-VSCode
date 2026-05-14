@@ -566,6 +566,10 @@ function createConfig(
     unityProject: getRelativePath(workspaceRoot, unityProject),
     defaultConfiguration: 'Debug',
     build,
+    watch: {
+      enabled: false,
+      debounceSeconds: 2
+    },
     privacy: {
       hideAbsolutePathsInManifest: true
     },

@@ -18,3 +18,16 @@
 - [x] 新增命令：`Unity DLL Bridge: 配置 dotnet 路径`。
 - [x] 在侧边栏和状态栏加入 dotnet 路径配置入口。
 - [x] 更新 README、VSCode 扩展说明和离线安装说明。
+
+## 全量工作流增强
+
+- [x] 新增一键环境诊断报告，覆盖 Unity、`.sln`、`.csproj`、dotnet、MSBuild、DLL/PDB。
+- [x] 新增自动发现报告，扫描附近 Unity 工程、C# 工程、解决方案和 DLL 输出目录。
+- [x] 新增打开 Unity 解决方案命令。
+- [x] 构建错误解析到 VSCode Problems 面板，支持跳转源码行。
+- [x] 新增 MSBuild 自动探测，支持 Visual Studio Build Tools 常见路径和 `dotnet msbuild`。
+- [x] 新增批量构建并同步命令。
+- [x] 新增源码变化后自动构建并同步开关和 `watch` 配置。
+- [x] 新增多种配置模板：只同步、dotnet、MSBuild、多项目。
+- [x] 新增 Unity Editor 附加调试配置生成命令。
+- [x] 增强 Unity 插件 manifest 窗口，显示 PDB 状态、主 DLL 缺失提醒和打开文件夹入口。

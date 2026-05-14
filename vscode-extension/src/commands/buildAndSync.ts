@@ -6,7 +6,7 @@ import { writeSyncLog } from '../sync/syncLog';
 import { formatTimestampForFileName } from '../utils/pathUtils';
 import { showValidationReport } from './validationReport';
 
-export function registerBuildAndSyncCommand(context: vscode.ExtensionContext): void {
+export function registerBuildAndSyncCommand(context: vscode.ExtensionContext, diagnostics?: vscode.DiagnosticCollection): void {
   const disposable = vscode.commands.registerCommand('unityDllBridge.buildAndSync', async () => {
     try {
       const { validation, resolvedConfig } = await resolveConfigForActiveConfiguration(context, {
@@ -26,7 +26,7 @@ export function registerBuildAndSyncCommand(context: vscode.ExtensionContext): v
           cancellable: false
         },
         async () => {
-          const buildResult = await runBuild(resolvedConfig);
+          const buildResult = await runBuild(resolvedConfig, diagnostics);
 
           if (!buildResult.success) {
             const timestamp = new Date();
@@ -38,7 +38,7 @@ export function registerBuildAndSyncCommand(context: vscode.ExtensionContext): v
               ],
               formatTimestampForFileName(timestamp)
             );
-            throw new Error(`构建失败，退出码：${buildResult.exitCode ?? 'unknown'}。请查看同步日志。`);
+            throw new Error(`构建失败，退出码：${buildResult.exitCode ?? 'unknown'}。已解析 ${buildResult.problems.length} 个 Problems，请查看同步日志。`);
           }
 
           const afterBuild = await resolveConfigForActiveConfiguration(context);

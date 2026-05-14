@@ -4,8 +4,9 @@
   "unityProject": "../UnityClient",
   "defaultConfiguration": "Debug",
   "build": {
-    "mode": "syncOnly",
-    "timeoutSeconds": 120
+    "mode": "dotnet",
+    "solutionPath": "../GameLogic/GameLogic.sln",
+    "timeoutSeconds": 180
   },
   "watch": {
     "enabled": false,
@@ -33,6 +34,32 @@
         },
         "Release": {
           "outputDir": "../GameLogic/bin/Release/netstandard2.1",
+          "copyAllDlls": false,
+          "copyPdb": false,
+          "copyXml": false,
+          "backupBeforeOverwrite": true,
+          "dependencies": []
+        }
+      }
+    },
+    {
+      "id": "protocol",
+      "name": "Protocol",
+      "assemblyName": "Protocol",
+      "sourceProject": "../Protocol/Protocol.csproj",
+      "targetPluginPath": "../UnityClient/Assets/Plugins/Protocol/Runtime",
+      "allowSourceCopy": false,
+      "configurations": {
+        "Debug": {
+          "outputDir": "../Protocol/bin/Debug/netstandard2.1",
+          "copyAllDlls": false,
+          "copyPdb": true,
+          "copyXml": true,
+          "backupBeforeOverwrite": true,
+          "dependencies": []
+        },
+        "Release": {
+          "outputDir": "../Protocol/bin/Release/netstandard2.1",
           "copyAllDlls": false,
           "copyPdb": false,
           "copyXml": false,

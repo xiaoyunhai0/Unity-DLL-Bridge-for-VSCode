@@ -4,7 +4,9 @@
   "unityProject": "../UnityClient",
   "defaultConfiguration": "Debug",
   "build": {
-    "mode": "syncOnly",
+    "mode": "msbuild",
+    "solutionPath": "../GameLogic/GameLogic.sln",
+    "msbuildPath": "auto",
     "timeoutSeconds": 120
   },
   "watch": {
