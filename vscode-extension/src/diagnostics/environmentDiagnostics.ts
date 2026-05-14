@@ -121,8 +121,13 @@ async function renderConfiguredProjects(context: DiagnosticContext, errors: stri
 
   const unityProject = resolveConfigPath(configDir, config.unityProject);
   const unityAssets = path.join(unityProject, 'Assets');
+  const unitySolutions = context.discovery.solutions.filter((solutionPath) => isInsideOrEqual(unityProject, solutionPath));
   lines.push(`- Unity 工程：${formatPath(configDir, unityProject)}`);
   lines.push(`- Assets：${await formatExists(unityAssets)}`);
+  lines.push(`- Unity 解决方案：${unitySolutions.length > 0 ? unitySolutions.map((solutionPath) => getRelativePath(configDir, solutionPath)).join(', ') : '未发现'}`);
+  if (unitySolutions.length === 0) {
+    warnings.push('没有发现 Unity 生成的 .sln。需要先在 Unity 中双击任意脚本生成解决方案。');
+  }
   lines.push('');
 
   for (const project of config.projects) {
@@ -150,7 +155,9 @@ async function renderConfiguredProjects(context: DiagnosticContext, errors: stri
     lines.push(`- copyAllDlls：${projectConfiguration.copyAllDlls === true ? 'true' : 'false'}`);
 
     if (project.sourceProject) {
-      lines.push(...(await renderPostBuildEvents(configDir, resolveConfigPath(configDir, project.sourceProject), warnings)));
+      const sourceProjectPath = resolveConfigPath(configDir, project.sourceProject);
+      lines.push(`- 已加入 Unity .sln：${await formatSolutionMembership(unitySolutions, sourceProjectPath)}`);
+      lines.push(...(await renderPostBuildEvents(configDir, sourceProjectPath, warnings)));
     }
 
     if (!projectConfiguration.copyPdb) {
@@ -258,6 +265,32 @@ async function renderPostBuildEvents(configDir: string, projectPath: string, war
   ];
 }
 
+async function formatSolutionMembership(solutionPaths: string[], projectPath: string): Promise<string> {
+  if (solutionPaths.length === 0) {
+    return '未检测，Unity .sln 不存在';
+  }
+
+  for (const solutionPath of solutionPaths) {
+    if (await solutionContainsProject(solutionPath, projectPath)) {
+      return `是（${path.basename(solutionPath)}）`;
+    }
+  }
+
+  return '否，可执行 `Unity DLL Bridge: 添加工程到 Unity 解决方案`';
+}
+
+async function solutionContainsProject(solutionPath: string, projectPath: string): Promise<boolean> {
+  try {
+    const content = await fs.readFile(solutionPath, 'utf8');
+    const solutionDir = path.dirname(solutionPath);
+    const relativeProjectPath = getRelativePath(solutionDir, projectPath).replace(/\//g, '\\').toLowerCase();
+    const normalizedContent = content.replace(/\//g, '\\').toLowerCase();
+    return normalizedContent.includes(relativeProjectPath) || normalizedContent.includes(path.basename(projectPath).toLowerCase());
+  } catch {
+    return false;
+  }
+}
+
 async function formatExists(filePath: string): Promise<string> {
   return `${filePath}（${await existsHint(filePath)}）`;
 }
@@ -277,4 +310,9 @@ async function existsHint(filePath: string): Promise<string> {
 
 function formatUnknownError(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function isInsideOrEqual(parentPath: string, candidatePath: string): boolean {
+  const relative = path.relative(path.resolve(parentPath), path.resolve(candidatePath));
+  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
 }

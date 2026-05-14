@@ -5,9 +5,10 @@ import { BridgeConfig } from '../config/types';
 import { resolveConfigPath } from '../utils/pathUtils';
 
 export class AutoBuildWatcher implements vscode.Disposable {
-  private watcher?: vscode.FileSystemWatcher;
+  private watchers: vscode.FileSystemWatcher[] = [];
   private timer?: NodeJS.Timeout;
   private enabled = false;
+  private running = false;
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
@@ -48,28 +49,26 @@ export class AutoBuildWatcher implements vscode.Disposable {
       throw new Error('没有配置 sourceProject，无法监听外部 C# 工程。');
     }
 
-    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? configDir;
-    const pattern = new vscode.RelativePattern(workspaceRoot, '**/*.cs');
-    this.watcher = vscode.workspace.createFileSystemWatcher(pattern);
     const debounceMs = Math.max((config.watch?.debounceSeconds ?? 2) * 1000, 500);
 
     const onChange = (uri: vscode.Uri) => {
-      if (!sourceProjects.some((sourceRoot) => isInsideOrEqual(sourceRoot, uri.fsPath))) {
-        return;
-      }
-
       if (this.timer) {
         clearTimeout(this.timer);
       }
 
       this.timer = setTimeout(() => {
-        void vscode.commands.executeCommand('unityDllBridge.buildAndSync');
+        void this.runBuildAndSync();
       }, debounceMs);
     };
 
-    this.watcher.onDidChange(onChange);
-    this.watcher.onDidCreate(onChange);
-    this.watcher.onDidDelete(onChange);
+    for (const sourceRoot of unique(sourceProjects)) {
+      const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(sourceRoot, '**/*.cs'));
+      watcher.onDidChange(onChange);
+      watcher.onDidCreate(onChange);
+      watcher.onDidDelete(onChange);
+      this.watchers.push(watcher);
+    }
+
     this.enabled = true;
   }
 
@@ -79,17 +78,31 @@ export class AutoBuildWatcher implements vscode.Disposable {
       this.timer = undefined;
     }
 
-    this.watcher?.dispose();
-    this.watcher = undefined;
+    for (const watcher of this.watchers) {
+      watcher.dispose();
+    }
+    this.watchers = [];
     this.enabled = false;
   }
 
   dispose(): void {
     this.stop();
   }
+
+  private async runBuildAndSync(): Promise<void> {
+    if (this.running) {
+      return;
+    }
+
+    this.running = true;
+    try {
+      await vscode.commands.executeCommand('unityDllBridge.buildAndSync');
+    } finally {
+      this.running = false;
+    }
+  }
 }
 
-function isInsideOrEqual(parentPath: string, candidatePath: string): boolean {
-  const relative = path.relative(path.resolve(parentPath), path.resolve(candidatePath));
-  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+function unique(values: string[]): string[] {
+  return [...new Set(values.map((value) => path.resolve(value)))];
 }

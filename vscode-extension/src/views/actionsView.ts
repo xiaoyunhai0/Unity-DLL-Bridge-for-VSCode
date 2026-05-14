@@ -19,6 +19,7 @@ interface DashboardState {
   workspaceName: string;
   configPath?: string;
   activeConfiguration?: string;
+  watchEnabled?: boolean;
   projectCount: number;
   projects: Array<{
     name: string;
@@ -173,6 +174,7 @@ async function getDashboardState(context: vscode.ExtensionContext): Promise<Dash
     workspaceName: workspaceFolder.name,
     configPath,
     activeConfiguration: resolvedConfig.activeConfiguration,
+    watchEnabled: resolvedConfig.config.watch?.enabled === true,
     projectCount: resolvedConfig.config.projects.length,
     projects: getProjectSummaries(resolvedConfig.config),
     errors: validation.errors,
@@ -432,6 +434,10 @@ function renderDashboard(webview: vscode.Webview, state: DashboardState): string
         <div class="meta-row">
           <div class="meta-label">项目</div>
           <div class="meta-value">${state.projectCount}</div>
+        </div>
+        <div class="meta-row">
+          <div class="meta-label">自动构建</div>
+          <div class="meta-value">${state.watchEnabled ? '已开启' : '未开启'}</div>
         </div>
       </div>
     </section>

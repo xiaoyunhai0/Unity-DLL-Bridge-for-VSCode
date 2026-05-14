@@ -131,7 +131,7 @@ async function refreshStatusBar(context: vscode.ExtensionContext, item: vscode.S
       return;
     }
     const activeConfiguration = getActiveConfiguration(context, resolvedConfig.config);
-    item.text = `DLL Bridge: ${activeConfiguration}`;
+    item.text = resolvedConfig.config.watch?.enabled === true ? `DLL Bridge: ${activeConfiguration} $(sync~spin)` : `DLL Bridge: ${activeConfiguration}`;
   } catch {
     item.text = 'DLL Bridge';
   }

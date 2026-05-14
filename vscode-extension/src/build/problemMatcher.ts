@@ -11,12 +11,14 @@ export interface BuildProblem {
 }
 
 const CSC_PATTERN = /^(?<file>.+?)\((?<line>\d+),(?<column>\d+)\):\s*(?<kind>error|warning)\s+(?<code>[A-Z]+\d+):\s*(?<message>.+?)(?:\s+\[(?<project>.+?)\])?$/i;
+const MSBUILD_PATTERN = /^(?<file>.+?)\((?<line>\d+)\):\s*(?<kind>error|warning)\s+(?<code>[A-Z]+\d+):\s*(?<message>.+?)(?:\s+\[(?<project>.+?)\])?$/i;
 
 export function parseBuildProblems(lines: string[], cwd: string): BuildProblem[] {
   const problems: BuildProblem[] = [];
 
   for (const line of lines) {
-    const match = CSC_PATTERN.exec(line.trim());
+    const trimmed = line.trim();
+    const match = CSC_PATTERN.exec(trimmed) ?? MSBUILD_PATTERN.exec(trimmed);
     if (!match?.groups) {
       continue;
     }
@@ -24,7 +26,7 @@ export function parseBuildProblems(lines: string[], cwd: string): BuildProblem[]
     problems.push({
       filePath: path.isAbsolute(match.groups.file) ? match.groups.file : path.resolve(cwd, match.groups.file),
       line: Number(match.groups.line),
-      column: Number(match.groups.column),
+      column: match.groups.column ? Number(match.groups.column) : 1,
       severity: match.groups.kind.toLowerCase() === 'error' ? vscode.DiagnosticSeverity.Error : vscode.DiagnosticSeverity.Warning,
       code: match.groups.code,
       message: match.groups.message
