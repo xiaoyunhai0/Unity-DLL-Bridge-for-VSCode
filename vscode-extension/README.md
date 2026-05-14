@@ -19,6 +19,7 @@ Unity Assets/Plugins
 - 左侧 Activity Bar 提供 `DLL Bridge` 工作台，展示配置状态、错误、提醒和项目摘要。
 - 状态栏提供常用操作入口。
 - 提供中文配置向导：选择 Unity 工程、外部 C# 工程文件夹、`.csproj` 或已有 DLL 输出文件夹后自动生成 `dllbridge.json`。
+- 支持把外部 `.csproj` 加入 Unity 自动生成的 `.sln`，对应 Visual Studio 的“添加现有项目”。
 - 生成 `dllbridge.json` 配置模板。
 - 支持 Debug / Release 等配置切换。
 - `仅构建 DLL`：只在 VSCode 中调用 `dotnet`、`msbuild` 或自定义命令构建 DLL，不同步到 Unity。
@@ -39,7 +40,7 @@ Unity Assets/Plugins
 当前配置和项目数量
 错误 / 提醒列表
 配置向导 / 编辑配置 / 创建模板
-构建与同步操作
+添加工程到解决方案 / 构建与同步操作
 日志和 manifest 入口
 ```
 
@@ -54,9 +55,10 @@ Unity Assets/Plugins
 2. 打开左侧 `DLL Bridge` 插件页面。
 3. 执行 `配置向导`。
 4. 依次选择 Unity 工程根目录、外部 C# 工程文件夹或已有 DLL 输出文件夹、Unity 目标目录。
-5. 执行 `校验配置`。
-6. 根据需要执行 `仅构建 DLL`、`仅同步 DLL` 或 `构建并同步`。
-7. 回到 Unity 刷新资源，或配合可选 Unity Editor 插件查看 manifest。
+5. 如需让 Unity `.sln` 像 Visual Studio 一样显示外部项目，执行 `添加工程到 Unity 解决方案`。
+6. 执行 `校验配置`。
+7. 根据需要执行 `仅构建 DLL`、`仅同步 DLL` 或 `构建并同步`。
+8. 回到 Unity 刷新资源，或配合可选 Unity Editor 插件查看 manifest。
 
 向导里路径应该这样选：
 
@@ -73,6 +75,7 @@ Unity 目标目录：建议选 Assets/Plugins/<程序集名>/Runtime
 |---|---|
 | `Unity DLL Bridge: 配置向导` | 选择 Unity 工程、C# 工程文件夹或 DLL 输出文件夹，自动生成 `dllbridge.json`。 |
 | `Unity DLL Bridge: 创建配置模板` | 在当前工作区创建手写模板。 |
+| `Unity DLL Bridge: 添加工程到 Unity 解决方案` | 将外部 `.csproj` 加入 Unity 自动生成的 `.sln`。 |
 | `Unity DLL Bridge: 选择 Debug/Release 配置` | 选择 Debug / Release 或其他配置。 |
 | `Unity DLL Bridge: 校验配置` | 校验 Unity 工程路径、输出目录、目标目录和安全配置。 |
 | `Unity DLL Bridge: 打开配置文件` | 打开 `dllbridge.json`，即使配置内容有错误也可以直接修改。 |
@@ -81,6 +84,22 @@ Unity 目标目录：建议选 Assets/Plugins/<程序集名>/Runtime
 | `Unity DLL Bridge: 构建并同步` | 先执行构建命令，再同步产物到 Unity。 |
 | `Unity DLL Bridge: 打开同步日志` | 打开 `.dllbridge/logs/latest.log`。 |
 | `Unity DLL Bridge: 打开 Manifest` | 打开 Unity 目标目录中的 `manifest.json`。 |
+
+## 对应 Visual Studio 流程
+
+Visual Studio 里的“右键解决方案 -> 添加 -> 现有项目”对应：
+
+```text
+Unity DLL Bridge: 添加工程到 Unity 解决方案
+```
+
+命令会读取配置中的 `unityProject` 和 `sourceProject`，自动查找 Unity `.sln`，并执行：
+
+```text
+dotnet sln <Unity.sln> add <gamelib.csproj>
+```
+
+Visual Studio 的“生成后事件复制 DLL/PDB”对应本扩展的 `构建并同步`。`copyPdb: true` 会同步 PDB，便于调试。
 
 ## 配置文件位置
 

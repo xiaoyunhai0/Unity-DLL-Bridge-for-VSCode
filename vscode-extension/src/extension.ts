@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { registerAddProjectToUnitySolutionCommand } from './commands/addProjectToUnitySolution';
 import { registerBuildAndSyncCommand } from './commands/buildAndSync';
 import { registerBuildDllOnlyCommand } from './commands/buildDllOnly';
 import { registerConfigWizardCommand } from './commands/configWizard';
@@ -22,6 +23,7 @@ export function activate(context: vscode.ExtensionContext): void {
   registerOpenSyncLogCommand(context);
   registerOpenManifestCommand(context);
   registerOpenConfigurationCommand(context);
+  registerAddProjectToUnitySolutionCommand(context);
   registerConfigWizardCommand(context, () => statusBar.refresh());
   registerCreateConfigTemplateCommand(context, () => statusBar.refresh());
   registerSelectConfigurationCommand(context, () => statusBar.refresh());

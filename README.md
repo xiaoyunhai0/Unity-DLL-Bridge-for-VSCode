@@ -24,6 +24,7 @@ VSCode 扩展：
 - 提供中文配置向导：选择 Unity 工程、外部 C# 工程文件夹、`.csproj` 或已有 DLL 输出文件夹后自动生成 `dllbridge.json`。
 - 生成 `dllbridge.json` 配置模板。
 - 校验 Unity 工程路径、DLL 输出目录和目标插件目录。
+- 支持把外部 `.csproj` 加入 Unity 自动生成的 `.sln`，对应 Visual Studio 的“添加现有项目”。
 - 支持 Debug / Release 等配置切换。
 - 支持 `仅同步 DLL`：同步已经存在的 DLL/PDB/XML/依赖 DLL。
 - 支持 `仅构建 DLL`：在 VSCode 中调用 `dotnet`、`msbuild` 或自定义命令，只构建 DLL。
@@ -180,6 +181,7 @@ C# 工程：E:/Unity/project/gamelib-main/gamelib/GameLogic.csproj
 ```text
 Unity DLL Bridge: 选择 Debug/Release 配置
 Unity DLL Bridge: 校验配置
+Unity DLL Bridge: 添加工程到 Unity 解决方案
 Unity DLL Bridge: 仅构建 DLL
 Unity DLL Bridge: 仅同步 DLL
 Unity DLL Bridge: 构建并同步
@@ -191,6 +193,20 @@ Unity DLL Bridge: 打开 Manifest
 
 如果希望 VSCode 扩展触发构建，配置 `build.mode` 后使用 `仅构建 DLL` 或 `构建并同步`。
 其中 `仅构建 DLL` 只执行构建，不复制到 Unity；`构建并同步` 会先构建再同步。
+
+如果希望复刻 Visual Studio 中“右键解决方案 -> 添加 -> 现有项目”的操作，先让 Unity 生成 `.sln`，再执行：
+
+```text
+Unity DLL Bridge: 添加工程到 Unity 解决方案
+```
+
+该命令会优先读取 `dllbridge.json` 中的 `unityProject` 和 `sourceProject`，自动查找 Unity `.sln`，然后执行类似：
+
+```text
+dotnet sln project.sln add gamelib.csproj
+```
+
+添加到 `.sln` 只是为了让 IDE 视图更接近 Visual Studio；实际 DLL/PDB 复制仍由 `构建并同步` 或 `仅同步 DLL` 负责。
 
 ## 构建模式
 

@@ -34,6 +34,11 @@ export function registerStatusBar(context: vscode.ExtensionContext): StatusBarCo
           command: 'unityDllBridge.buildAndSync'
         },
         {
+          label: '添加工程到 Unity 解决方案',
+          description: '把外部 .csproj 加入 Unity 生成的 .sln',
+          command: 'unityDllBridge.addProjectToUnitySolution'
+        },
+        {
           label: '仅构建 DLL',
           description: '只执行 dotnet/msbuild/custom 构建，不同步到 Unity',
           command: 'unityDllBridge.buildDllOnly'

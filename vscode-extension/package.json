@@ -32,6 +32,7 @@
     "onCommand:unityDllBridge.openSyncLog",
     "onCommand:unityDllBridge.openManifest",
     "onCommand:unityDllBridge.openConfiguration",
+    "onCommand:unityDllBridge.addProjectToUnitySolution",
     "onCommand:unityDllBridge.configWizard",
     "onCommand:unityDllBridge.createConfigTemplate",
     "onCommand:unityDllBridge.selectConfiguration",
@@ -79,6 +80,10 @@
       {
         "command": "unityDllBridge.openConfiguration",
         "title": "Unity DLL Bridge: 打开配置文件"
+      },
+      {
+        "command": "unityDllBridge.addProjectToUnitySolution",
+        "title": "Unity DLL Bridge: 添加工程到 Unity 解决方案"
       },
       {
         "command": "unityDllBridge.configWizard",
