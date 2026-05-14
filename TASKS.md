@@ -8,4 +8,4 @@
 - [x] 从 `dllbridge.json` 读取 `unityProject` 与 `projects[].sourceProject`，减少重复选择。
 - [x] 在侧边栏和状态栏中加入“添加工程到 Unity 解决方案”入口。
 - [x] 更新 README、VSCode 扩展说明和离线安装说明。
-- [ ] 编译、打包、提交，并通过 GitHub Actions 刷新 Release。
+- [x] 编译、打包、提交，并通过 GitHub Actions 刷新 Release。
