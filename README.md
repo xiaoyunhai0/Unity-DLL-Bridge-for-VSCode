@@ -93,7 +93,7 @@ Unity DLL Bridge: 配置向导
 - 外部 C# 项目：优先选择源码工程文件夹，向导会在里面找 `.csproj`。`.csproj` 代表整个 C# 项目，会编译很多 `.cs` 文件，不是单个 `.cs` 文件。
 - DLL 输出：如果公司已有构建流程，也可以直接选择包含 DLL 的输出文件夹，从这个文件夹同步到 Unity 目标文件夹。
 - Unity 目标目录：建议使用 `Assets/Plugins/<程序集名>/Runtime`。
-- 构建方式：离线或 Visual Studio 编译场景选“只同步已有 DLL”；安装了 dotnet SDK 时可选 `dotnet build`。
+- 构建方式：离线或 Visual Studio 编译场景选“只同步已有 DLL”；安装了 dotnet SDK 时可选 `dotnet build`。扩展会自动查找 `dotnet`，找不到时可直接在向导里选择 dotnet 安装文件夹。
 
 插件会自动推断：
 
@@ -103,6 +103,7 @@ Unity DLL Bridge: 配置向导
 - 是否同步输出文件夹中的所有 DLL
 - `targetPluginPath`
 - `build.mode`
+- `build.dotnetPath`：通常不用填写。扩展会自动检查 PATH、`DOTNET_ROOT` 和常见安装目录；只有离线机器 PATH 没配好时，才需要通过 `Unity DLL Bridge: 配置 dotnet 路径` 写入。
 
 如果自动推断不符合你的项目结构，再打开 `dllbridge.json` 做少量调整。
 
@@ -237,6 +238,21 @@ dotnet sln project.sln add gamelib.csproj
 ```text
 dotnet build ../GameLogic/GameLogic.csproj -c Debug
 ```
+
+扩展会按下面顺序自动查找 dotnet：
+
+- `build.dotnetPath` 已配置时优先使用。
+- PATH 中的 `dotnet`。
+- `DOTNET_ROOT`、`DOTNET_ROOT_X64`、`DOTNET_ROOT_X86`。
+- Windows/macOS/Linux 常见安装目录。
+
+如果自动检测失败，不需要手写 JSON。执行：
+
+```text
+Unity DLL Bridge: 配置 dotnet 路径
+```
+
+可以选择 dotnet 安装文件夹，例如 `C:/Program Files/dotnet`，也可以直接选择 `dotnet.exe` / `dotnet` 可执行文件。
 
 `msbuild`：
 

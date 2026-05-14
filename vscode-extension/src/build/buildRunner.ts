@@ -1,6 +1,7 @@
 import * as cp from 'child_process';
 import * as path from 'path';
 import { BridgeBuildConfig, ResolvedBridgeConfig } from '../config/types';
+import { resolveDotnetCommand, shouldUseShell } from '../dotnet/dotnetLocator';
 import { resolveConfigPath } from '../utils/pathUtils';
 
 export interface BuildResult {
@@ -28,11 +29,14 @@ export async function runBuild(resolvedConfig: ResolvedBridgeConfig): Promise<Bu
     };
   }
 
-  const commandLine = getBuildCommand(build, resolvedConfig);
+  const commandLine = await getBuildCommand(build, resolvedConfig);
   const lines = [
     `Build mode: ${mode}`,
     `Command: ${commandLine.command} ${commandLine.args.join(' ')}`
   ];
+  if (commandLine.note) {
+    lines.push(commandLine.note);
+  }
 
   const result = await runProcess(commandLine.command, commandLine.args, resolvedConfig.configDir, build.timeoutSeconds ?? 120, lines);
 
@@ -47,14 +51,16 @@ export async function runBuild(resolvedConfig: ResolvedBridgeConfig): Promise<Bu
   };
 }
 
-function getBuildCommand(build: BridgeBuildConfig, resolvedConfig: ResolvedBridgeConfig): { command: string; args: string[] } {
+async function getBuildCommand(build: BridgeBuildConfig, resolvedConfig: ResolvedBridgeConfig): Promise<{ command: string; args: string[]; note?: string }> {
   const mode = build.mode ?? 'syncOnly';
 
   if (mode === 'dotnet') {
     const projectOrSolution = build.projectPath ?? build.solutionPath ?? firstSourceProject(resolvedConfig);
+    const dotnet = await resolveDotnetCommand(resolvedConfig.configDir, build.dotnetPath);
     return {
-      command: build.dotnetPath ?? 'dotnet',
-      args: ['build', resolveConfigPath(resolvedConfig.configDir, projectOrSolution), '-c', resolvedConfig.activeConfiguration]
+      command: dotnet.command,
+      args: ['build', resolveConfigPath(resolvedConfig.configDir, projectOrSolution), '-c', resolvedConfig.activeConfiguration],
+      note: `Dotnet: ${dotnet.label}${dotnet.version ? ` (${dotnet.version})` : ''}`
     };
   }
 
@@ -102,7 +108,7 @@ function runProcess(command: string, args: string[], cwd: string, timeoutSeconds
   return new Promise((resolve, reject) => {
     const child = cp.spawn(command, args, {
       cwd,
-      shell: process.platform === 'win32'
+      shell: shouldUseShell(command)
     });
     const timeout = setTimeout(() => {
       child.kill();

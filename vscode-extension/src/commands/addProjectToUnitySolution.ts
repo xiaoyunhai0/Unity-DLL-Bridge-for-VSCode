@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { loadBridgeConfig } from '../config/loadConfig';
 import { BridgeConfig } from '../config/types';
+import { DotnetResolveResult, resolveDotnetCommand, shouldUseShell } from '../dotnet/dotnetLocator';
 import { getRelativePath, resolveConfigPath } from '../utils/pathUtils';
 
 interface SolutionCandidate extends vscode.QuickPickItem {
@@ -17,6 +18,7 @@ interface ProjectCandidate extends vscode.QuickPickItem {
 interface CommandResult {
   exitCode: number | null;
   lines: string[];
+  dotnet: DotnetResolveResult;
 }
 
 export function registerAddProjectToUnitySolutionCommand(context: vscode.ExtensionContext): void {
@@ -30,7 +32,7 @@ export function registerAddProjectToUnitySolutionCommand(context: vscode.Extensi
         return;
       }
 
-      const defaults = await getConfigDefaults();
+      const defaults = await getConfigDefaults(workspaceFolder.uri.fsPath);
       const unityProject = defaults.unityProject ?? (await chooseUnityProject(workspaceFolder.uri.fsPath));
       if (!unityProject) {
         return;
@@ -57,7 +59,10 @@ export function registerAddProjectToUnitySolutionCommand(context: vscode.Extensi
           title: 'Unity DLL Bridge: 添加工程到 Unity 解决方案',
           cancellable: false
         },
-        () => runDotnetSlnAdd(solutionPath, projectPath)
+        async () => {
+          const dotnet = await resolveDotnetCommand(defaults.configDir, defaults.dotnetPath);
+          return runDotnetSlnAdd(solutionPath, projectPath, dotnet);
+        }
       );
 
       showCommandOutput(output, solutionPath, projectPath, result);
@@ -73,14 +78,17 @@ export function registerAddProjectToUnitySolutionCommand(context: vscode.Extensi
       const message = error instanceof Error ? error.message : String(error);
       output.appendLine(`添加工程到 Unity 解决方案失败：${message}`);
       output.show(true);
-      vscode.window.showErrorMessage(`添加工程到 Unity 解决方案失败：${message}`);
+      const selection = await vscode.window.showErrorMessage(`添加工程到 Unity 解决方案失败：${message}`, '配置 dotnet 路径');
+      if (selection === '配置 dotnet 路径') {
+        await vscode.commands.executeCommand('unityDllBridge.configureDotnetPath');
+      }
     }
   });
 
   context.subscriptions.push(disposable);
 }
 
-async function getConfigDefaults(): Promise<{ unityProject?: string; projectPath?: string }> {
+async function getConfigDefaults(workspaceRoot: string): Promise<{ configDir: string; unityProject?: string; projectPath?: string; dotnetPath?: string }> {
   try {
     const loaded = await loadBridgeConfig();
     const config = loaded.config as Partial<BridgeConfig>;
@@ -92,11 +100,13 @@ async function getConfigDefaults(): Promise<{ unityProject?: string; projectPath
     const projectPath = configuredProject ? resolveConfigPath(loaded.configDir, configuredProject) : undefined;
 
     return {
+      configDir: loaded.configDir,
       unityProject: unityProject && (await directoryExists(unityProject)) ? unityProject : undefined,
-      projectPath: projectPath && (await fileExists(projectPath)) ? projectPath : undefined
+      projectPath: projectPath && (await fileExists(projectPath)) ? projectPath : undefined,
+      dotnetPath: typeof config.build?.dotnetPath === 'string' ? config.build.dotnetPath : undefined
     };
   } catch {
-    return {};
+    return { configDir: workspaceRoot };
   }
 }
 
@@ -249,18 +259,18 @@ async function solutionContainsProject(solutionPath: string, projectPath: string
   return normalizedContent.includes(relativeProjectPath) || normalizedContent.includes(path.basename(projectPath).toLowerCase());
 }
 
-function runDotnetSlnAdd(solutionPath: string, projectPath: string): Promise<CommandResult> {
+function runDotnetSlnAdd(solutionPath: string, projectPath: string, dotnet: DotnetResolveResult): Promise<CommandResult> {
   return new Promise((resolve, reject) => {
     const lines: string[] = [];
-    const child = cp.spawn('dotnet', ['sln', solutionPath, 'add', projectPath], {
+    const child = cp.spawn(dotnet.command, ['sln', solutionPath, 'add', projectPath], {
       cwd: path.dirname(solutionPath),
-      shell: process.platform === 'win32'
+      shell: shouldUseShell(dotnet.command)
     });
 
     child.stdout.on('data', (chunk) => appendOutput(lines, chunk));
     child.stderr.on('data', (chunk) => appendOutput(lines, chunk));
     child.on('error', reject);
-    child.on('close', (exitCode) => resolve({ exitCode, lines }));
+    child.on('close', (exitCode) => resolve({ exitCode, lines, dotnet }));
   });
 }
 
@@ -270,7 +280,8 @@ function showCommandOutput(output: vscode.OutputChannel, solutionPath: string, p
   output.appendLine('');
   output.appendLine(`Solution: ${solutionPath}`);
   output.appendLine(`Project: ${projectPath}`);
-  output.appendLine(`Command: dotnet sln "${solutionPath}" add "${projectPath}"`);
+  output.appendLine(`Dotnet: ${result.dotnet.label}${result.dotnet.version ? ` (${result.dotnet.version})` : ''}`);
+  output.appendLine(`Command: ${result.dotnet.command} sln "${solutionPath}" add "${projectPath}"`);
   output.appendLine('');
 
   for (const line of result.lines) {

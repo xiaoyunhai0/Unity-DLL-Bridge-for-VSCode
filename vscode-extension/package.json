@@ -33,6 +33,7 @@
     "onCommand:unityDllBridge.openManifest",
     "onCommand:unityDllBridge.openConfiguration",
     "onCommand:unityDllBridge.addProjectToUnitySolution",
+    "onCommand:unityDllBridge.configureDotnetPath",
     "onCommand:unityDllBridge.configWizard",
     "onCommand:unityDllBridge.createConfigTemplate",
     "onCommand:unityDllBridge.selectConfiguration",
@@ -84,6 +85,10 @@
       {
         "command": "unityDllBridge.addProjectToUnitySolution",
         "title": "Unity DLL Bridge: 添加工程到 Unity 解决方案"
+      },
+      {
+        "command": "unityDllBridge.configureDotnetPath",
+        "title": "Unity DLL Bridge: 配置 dotnet 路径"
       },
       {
         "command": "unityDllBridge.configWizard",

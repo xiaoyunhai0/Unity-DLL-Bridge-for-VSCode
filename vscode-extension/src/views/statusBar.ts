@@ -39,6 +39,11 @@ export function registerStatusBar(context: vscode.ExtensionContext): StatusBarCo
           command: 'unityDllBridge.addProjectToUnitySolution'
         },
         {
+          label: '配置 dotnet 路径',
+          description: '自动检测失败时，选择 dotnet 安装目录或可执行文件',
+          command: 'unityDllBridge.configureDotnetPath'
+        },
+        {
           label: '仅构建 DLL',
           description: '只执行 dotnet/msbuild/custom 构建，不同步到 Unity',
           command: 'unityDllBridge.buildDllOnly'

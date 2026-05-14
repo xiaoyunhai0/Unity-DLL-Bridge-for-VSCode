@@ -2,10 +2,16 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { BridgeBuildConfig, BridgeConfig, BridgeProjectConfiguration } from '../config/types';
+import { getDotnetVersion, resolveDotnetPath, tryResolveDotnetCommand } from '../dotnet/dotnetLocator';
 import { getRelativePath } from '../utils/pathUtils';
 
 type SourceMode = 'projectFolder' | 'csproj' | 'dllOutputFolder' | 'dllFile';
 type BuildMode = 'syncOnly' | 'dotnet';
+
+interface SelectedBuild {
+  mode: BuildMode;
+  dotnetPath?: string;
+}
 
 interface SelectedSource {
   mode: SourceMode;
@@ -58,12 +64,12 @@ export function registerConfigWizardCommand(context: vscode.ExtensionContext, on
         return;
       }
 
-      const buildMode = await chooseBuildMode(source);
-      if (!buildMode) {
+      const build = await chooseBuild(workspaceRoot, source);
+      if (!build) {
         return;
       }
 
-      const config = createConfig(workspaceRoot, workspaceFolder.name, unityProject, source, targetPluginPath, buildMode);
+      const config = createConfig(workspaceRoot, workspaceFolder.name, unityProject, source, targetPluginPath, build);
       await fs.writeFile(targetPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
 
       const document = await vscode.workspace.openTextDocument(targetPath);
@@ -429,7 +435,7 @@ async function chooseTargetPluginPath(unityProject: string, assemblyName: string
   return selectedFolder;
 }
 
-async function chooseBuildMode(source: SelectedSource): Promise<BuildMode | undefined> {
+async function chooseBuild(workspaceRoot: string, source: SelectedSource): Promise<SelectedBuild | undefined> {
   const choices: Array<QuickPickChoice<BuildMode>> = [
     {
       label: '只同步已有 DLL（推荐离线/Visual Studio 编译场景）',
@@ -439,9 +445,10 @@ async function chooseBuildMode(source: SelectedSource): Promise<BuildMode | unde
   ];
 
   if (source.sourceProject) {
+    const dotnet = await tryResolveDotnetCommand(workspaceRoot);
     choices.push({
-      label: '在 VSCode 中使用 dotnet build 构建',
-      description: '需要离线环境已安装 dotnet SDK',
+      label: '像 Visual Studio 一样在 VSCode 中调用 dotnet build',
+      description: dotnet ? `已自动检测到 dotnet ${dotnet.version}` : '未检测到 dotnet，可在下一步手动选择安装文件夹',
       value: 'dotnet'
     });
   }
@@ -450,7 +457,94 @@ async function chooseBuildMode(source: SelectedSource): Promise<BuildMode | unde
     placeHolder: '选择构建方式'
   });
 
-  return selected?.value;
+  if (!selected) {
+    return undefined;
+  }
+
+  if (selected.value === 'syncOnly') {
+    return { mode: 'syncOnly' };
+  }
+
+  return chooseDotnetBuild(workspaceRoot);
+}
+
+async function chooseDotnetBuild(workspaceRoot: string): Promise<SelectedBuild | undefined> {
+  const dotnet = await tryResolveDotnetCommand(workspaceRoot);
+
+  if (dotnet) {
+    const selection = await vscode.window.showQuickPick<QuickPickChoice<'auto' | 'manual'>>(
+      [
+        {
+          label: `自动使用已检测到的 dotnet ${dotnet.version}`,
+          description: dotnet.label,
+          value: 'auto'
+        },
+        {
+          label: '手动选择 dotnet 安装文件夹...',
+          description: '适合 PATH 没配好，或需要指定公司离线 SDK 的情况',
+          value: 'manual'
+        }
+      ],
+      { placeHolder: '选择 dotnet 调用方式' }
+    );
+
+    if (!selection) {
+      return undefined;
+    }
+
+    if (selection.value === 'auto') {
+      return { mode: 'dotnet' };
+    }
+  }
+
+  const selectedPath = await chooseDotnetInstallPath(workspaceRoot);
+  if (!selectedPath) {
+    return undefined;
+  }
+
+  const resolved = await resolveDotnetPath(workspaceRoot, selectedPath);
+  const version = await getDotnetVersion(resolved.command);
+  if (!version) {
+    const selection = await vscode.window.showErrorMessage(`所选 dotnet 无法运行：${resolved.command}`, '重新选择', '改为只同步');
+    if (selection === '重新选择') {
+      return chooseDotnetBuild(workspaceRoot);
+    }
+
+    return selection === '改为只同步' ? { mode: 'syncOnly' } : undefined;
+  }
+
+  return {
+    mode: 'dotnet',
+    dotnetPath: resolved.command
+  };
+}
+
+async function chooseDotnetInstallPath(workspaceRoot: string): Promise<string | undefined> {
+  const mode = await vscode.window.showQuickPick<QuickPickChoice<'folder' | 'file'>>(
+    [
+      {
+        label: '选择 dotnet 安装文件夹（推荐）',
+        description: '例如 C:/Program Files/dotnet；如果选到 sdk 子目录，扩展会向上查找 dotnet.exe',
+        value: 'folder'
+      },
+      {
+        label: '选择 dotnet 可执行文件',
+        description: '例如 dotnet.exe 或 dotnet',
+        value: 'file'
+      }
+    ],
+    { placeHolder: 'dotnet 不在 PATH 中时，可以从这里手动指定' }
+  );
+
+  if (!mode) {
+    return undefined;
+  }
+
+  if (mode.value === 'folder') {
+    return showFolderPicker('选择 dotnet 安装文件夹', workspaceRoot);
+  }
+
+  return showFilePicker('选择 dotnet 可执行文件', workspaceRoot, process.platform === 'win32' ? { 'Executable': ['exe'] } : undefined);
 }
 
 function createConfig(
@@ -459,12 +553,12 @@ function createConfig(
   unityProject: string,
   source: SelectedSource,
   targetPluginPath: string,
-  buildMode: BuildMode
+  selectedBuild: SelectedBuild
 ): BridgeConfig {
   const debugConfig = createProjectConfiguration(workspaceRoot, source.debugOutputDir, source.copyAllDlls, true, true);
   const releaseConfig = createProjectConfiguration(workspaceRoot, source.releaseOutputDir, source.copyAllDlls, false, false);
   const sourceProject = source.sourceProject ? getRelativePath(workspaceRoot, source.sourceProject) : undefined;
-  const build = createBuildConfig(workspaceRoot, source, buildMode);
+  const build = createBuildConfig(workspaceRoot, source, selectedBuild);
 
   return {
     version: 1,
@@ -509,14 +603,17 @@ function createProjectConfiguration(
   };
 }
 
-function createBuildConfig(workspaceRoot: string, source: SelectedSource, buildMode: BuildMode): BridgeBuildConfig {
+function createBuildConfig(workspaceRoot: string, source: SelectedSource, selectedBuild: SelectedBuild): BridgeBuildConfig {
   const build: BridgeBuildConfig = {
-    mode: buildMode,
+    mode: selectedBuild.mode,
     timeoutSeconds: 120
   };
 
-  if (buildMode === 'dotnet' && source.sourceProject) {
+  if (selectedBuild.mode === 'dotnet' && source.sourceProject) {
     build.projectPath = getRelativePath(workspaceRoot, source.sourceProject);
+    if (selectedBuild.dotnetPath) {
+      build.dotnetPath = selectedBuild.dotnetPath;
+    }
   }
 
   return build;
@@ -763,14 +860,14 @@ async function showFolderPicker(title: string, defaultUriPath: string): Promise<
   return selected?.[0]?.fsPath;
 }
 
-async function showFilePicker(title: string, defaultUriPath: string, filters: Record<string, string[]>): Promise<string | undefined> {
+async function showFilePicker(title: string, defaultUriPath: string, filters?: Record<string, string[]>): Promise<string | undefined> {
   const selected = await vscode.window.showOpenDialog({
     title,
     canSelectFiles: true,
     canSelectFolders: false,
     canSelectMany: false,
     defaultUri: vscode.Uri.file(defaultUriPath),
-    filters
+    ...(filters ? { filters } : {})
   });
 
   return selected?.[0]?.fsPath;

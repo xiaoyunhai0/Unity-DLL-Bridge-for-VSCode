@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { registerAddProjectToUnitySolutionCommand } from './commands/addProjectToUnitySolution';
 import { registerBuildAndSyncCommand } from './commands/buildAndSync';
 import { registerBuildDllOnlyCommand } from './commands/buildDllOnly';
+import { registerConfigureDotnetPathCommand } from './commands/configureDotnetPath';
 import { registerConfigWizardCommand } from './commands/configWizard';
 import { registerCreateConfigTemplateCommand } from './commands/createConfigTemplate';
 import { registerOpenManifestCommand } from './commands/openManifest';
@@ -24,6 +25,7 @@ export function activate(context: vscode.ExtensionContext): void {
   registerOpenManifestCommand(context);
   registerOpenConfigurationCommand(context);
   registerAddProjectToUnitySolutionCommand(context);
+  registerConfigureDotnetPathCommand(context, () => statusBar.refresh());
   registerConfigWizardCommand(context, () => statusBar.refresh());
   registerCreateConfigTemplateCommand(context, () => statusBar.refresh());
   registerSelectConfigurationCommand(context, () => statusBar.refresh());

@@ -216,6 +216,7 @@ function renderDashboard(webview: vscode.Webview, state: DashboardState): string
   const primaryActions = getPrimaryActions(state);
   const buildActions: DashboardAction[] = [
     { label: '添加工程到解决方案', command: 'unityDllBridge.addProjectToUnitySolution' },
+    { label: '配置 dotnet 路径', command: 'unityDllBridge.configureDotnetPath' },
     { label: '仅构建 DLL', command: 'unityDllBridge.buildDllOnly', variant: 'primary' },
     { label: '构建并同步', command: 'unityDllBridge.buildAndSync', variant: 'primary' },
     { label: '仅同步', command: 'unityDllBridge.syncOnly' }

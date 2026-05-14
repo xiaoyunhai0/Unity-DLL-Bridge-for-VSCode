@@ -35,16 +35,17 @@ checksums.txt
 3. 选择 Unity 工程根目录，也就是包含 `Assets` 的目录。
 4. 选择外部 C# 工程文件夹。向导会在里面查找 `.csproj`，`.csproj` 代表整个 C# 项目，不是单个 `.cs` 文件。如果离线环境只拿到了 DLL 产物，也可以选择 DLL 输出文件夹。
 5. 选择 Unity 目标目录，建议位于 `Assets/Plugins/<程序集名>/Runtime`。
-6. 选择构建方式。离线或 Visual Studio 编译场景选“只同步已有 DLL”；如果离线机器已安装 dotnet SDK，可以选择 `dotnet build`。
+6. 选择构建方式。离线或 Visual Studio 编译场景选“只同步已有 DLL”；如果离线机器已安装 dotnet SDK，可以选择 `dotnet build`。扩展会自动检测 dotnet，检测不到时可以在下一步选择 dotnet 安装文件夹。
 7. 向导会生成 `dllbridge.json`，并自动填写 `unityProject`、`sourceProject`、`assemblyName`、`outputDir`、`copyAllDlls` 和 `targetPluginPath`。
-8. 如需把外部 `.csproj` 加入 Unity 自动生成的 `.sln`，执行 `Unity DLL Bridge: 添加工程到 Unity 解决方案`。
-9. 如需切换 Debug / Release，执行 `Unity DLL Bridge: 选择 Debug/Release 配置`。
-10. 在 VSCode 命令面板执行 `Unity DLL Bridge: 校验配置`。
-11. 如果只想在 VSCode 中构建 DLL，不同步到 Unity，执行 `Unity DLL Bridge: 仅构建 DLL`。
-12. 如果 DLL 已经由 Visual Studio 或内部工具编译好，执行 `Unity DLL Bridge: 仅同步 DLL`。
-13. 如果已配置 `build.mode` 为 `dotnet`、`msbuild` 或 `custom`，并希望构建后同步，执行 `Unity DLL Bridge: 构建并同步`。
-14. 如需查看构建或同步日志，执行 `Unity DLL Bridge: 打开同步日志`。
-15. 如需查看生成的 DLL 版本信息，执行 `Unity DLL Bridge: 打开 Manifest`。
+8. 如果离线机器安装了 dotnet 但没有配置 PATH，执行 `Unity DLL Bridge: 配置 dotnet 路径`，选择 dotnet 安装文件夹或 `dotnet.exe`。
+9. 如需把外部 `.csproj` 加入 Unity 自动生成的 `.sln`，执行 `Unity DLL Bridge: 添加工程到 Unity 解决方案`。
+10. 如需切换 Debug / Release，执行 `Unity DLL Bridge: 选择 Debug/Release 配置`。
+11. 在 VSCode 命令面板执行 `Unity DLL Bridge: 校验配置`。
+12. 如果只想在 VSCode 中构建 DLL，不同步到 Unity，执行 `Unity DLL Bridge: 仅构建 DLL`。
+13. 如果 DLL 已经由 Visual Studio 或内部工具编译好，执行 `Unity DLL Bridge: 仅同步 DLL`。
+14. 如果已配置 `build.mode` 为 `dotnet`、`msbuild` 或 `custom`，并希望构建后同步，执行 `Unity DLL Bridge: 构建并同步`。
+15. 如需查看构建或同步日志，执行 `Unity DLL Bridge: 打开同步日志`。
+16. 如需查看生成的 DLL 版本信息，执行 `Unity DLL Bridge: 打开 Manifest`。
 
 手动模板仍然可用：执行 `Unity DLL Bridge: 创建配置模板`，或从模板包中复制 `dllbridge.single.json`，重命名为 `dllbridge.json` 后放到工作区根目录。
 
@@ -63,7 +64,7 @@ checksums.txt
 ## 注意事项
 
 - 默认使用 `syncOnly`，请先使用 Visual Studio、Build Tools 或公司内部工具生成 DLL。
-- `添加工程到 Unity 解决方案` 需要离线机器能运行 `dotnet sln`。
+- `添加工程到 Unity 解决方案` 需要离线机器能运行 `dotnet sln`。扩展会自动查找 dotnet；如果找不到，请执行 `Unity DLL Bridge: 配置 dotnet 路径`。
 - 如需让扩展内部触发构建，可以配置 `build.mode` 为 `dotnet`、`msbuild` 或 `custom`，再执行 `仅构建 DLL` 或 `构建并同步`。
 - 默认不会复制 `.cs`、`.csproj`、`.sln` 等源码文件。
 - 同步日志写入当前工作区 `.dllbridge/logs/`，该目录不需要提交到 Git。
