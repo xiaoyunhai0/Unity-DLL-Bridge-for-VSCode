@@ -140,11 +140,15 @@ function getSolutionContextProperties(build: BridgeBuildConfig, configDir: strin
 }
 
 function toMsbuildDirectory(directoryPath: string): string {
-  return `${toMsbuildPath(directoryPath).replace(/\/+$/, '')}/`;
+  const separator = process.platform === 'win32' ? '\\' : '/';
+  return `${toMsbuildPath(directoryPath).replace(/[\\/]+$/, '')}${separator}`;
 }
 
 function toMsbuildPath(filePath: string): string {
-  return path.normalize(filePath).split(path.sep).join('/');
+  const normalizedPath = path.normalize(filePath);
+  return process.platform === 'win32'
+    ? normalizedPath.replace(/\//g, '\\')
+    : normalizedPath.split(path.sep).join('/');
 }
 
 function resolveMaybeRelativeCommand(configDir: string, command: string): string {
