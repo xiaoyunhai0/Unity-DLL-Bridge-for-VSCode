@@ -421,6 +421,31 @@ function renderDashboard(webview: vscode.Webview, state: DashboardState): string
       gap: 8px;
     }
 
+    details.section {
+      display: block;
+    }
+
+    summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      cursor: pointer;
+      color: var(--vscode-descriptionForeground);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      user-select: none;
+    }
+
+    summary::-webkit-details-marker {
+      color: var(--vscode-descriptionForeground);
+    }
+
+    details[open] summary {
+      margin-bottom: 8px;
+    }
+
     .actions {
       display: grid;
       grid-template-columns: 1fr;
@@ -564,14 +589,17 @@ function renderDashboard(webview: vscode.Webview, state: DashboardState): string
     ${renderProblems(state)}
 
     <section class="section">
-      <h2>解决方案中的工程</h2>
-      ${renderSolutionProjects(state.solutionProjects)}
-    </section>
-
-    <section class="section">
       <h2>已配置工程</h2>
       ${renderProjects(state.projects)}
     </section>
+
+    <details class="section">
+      <summary>
+        <span>解决方案中的工程</span>
+        <span class="badge">${state.solutionProjects.length}</span>
+      </summary>
+      ${renderSolutionProjects(state.solutionProjects)}
+    </details>
 
     <section class="section">
       <h2>配置与工具</h2>
