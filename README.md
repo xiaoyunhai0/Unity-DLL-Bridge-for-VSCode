@@ -146,6 +146,8 @@ Unity DLL Bridge: 配置向导
 
 如果自动推断不符合你的项目结构，再打开 `dllbridge.json` 做少量调整。
 
+如果 `dllbridge.json` 就放在 Unity 工程根目录，也就是和 `Assets`、`ProjectSettings` 同级，`unityProject` 应写成 `"."`，表示当前目录就是 Unity 工程，不能留空。
+
 手动模板仍然保留。命令面板执行：
 
 ```text

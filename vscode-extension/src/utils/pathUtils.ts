@@ -31,7 +31,8 @@ export async function fileExists(filePath: string): Promise<boolean> {
 }
 
 export function getRelativePath(fromDirectory: string, toPath: string): string {
-  return path.relative(fromDirectory, toPath).split(path.sep).join('/');
+  const relativePath = path.relative(fromDirectory, toPath).split(path.sep).join('/');
+  return relativePath === '' ? '.' : relativePath;
 }
 
 export function formatTimestampForFileName(date: Date): string {

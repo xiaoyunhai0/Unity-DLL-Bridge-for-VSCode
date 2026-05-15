@@ -56,6 +56,7 @@ Unity 解决方案
 
 如果还没有 `dllbridge.json`，优先点击左侧 `DLL Bridge` 页面里的 `添加现有工程`，选择 Unity `.sln` 和外部 `.csproj`。
 如果配置有错误，左侧工作台会显示错误列表，并提供 `编辑配置` 按钮直接打开 `dllbridge.json` 修改。
+如果 `dllbridge.json` 就放在 Unity 工程根目录，也就是和 `Assets`、`ProjectSettings` 同级，`unityProject` 应写成 `"."`，表示当前目录就是 Unity 工程，不能留空。
 
 ## 推荐流程
 
