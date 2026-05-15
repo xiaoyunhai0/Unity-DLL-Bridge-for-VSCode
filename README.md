@@ -257,7 +257,7 @@ Unity DLL Bridge: 添加工程到 Unity 解决方案
 dotnet sln project.sln add gamelib.csproj
 ```
 
-添加成功后会自动写入 `dllbridge.json`：`build.mode` 会设为 `dotnet`，`build.solutionPath` 指向 Unity `.sln`，`build.projectPath` 指向外部 `.csproj`，`projects[]` 会记录程序集名、输出目录和 Unity 目标目录。之后直接点击 `生成 DLL` 即可调用 `dotnet build <gamelib.csproj> -c Debug`。
+添加成功后会自动写入 `dllbridge.json`：`build.mode` 会设为 `dotnet`，`build.solutionPath` 指向 Unity `.sln`，`build.projectPath` 指向外部 `.csproj`，`projects[]` 会记录程序集名、输出目录和 Unity 目标目录。之后直接点击 `生成 DLL` 即可调用 `dotnet build <gamelib.csproj> -c Debug`。如果 `.csproj` 的生成后事件使用了 `$(SolutionDir)`，扩展会按 Unity `.sln` 自动补齐这个变量，避免出现 `*Undefined*Assets/Plugins`。
 
 如果不知道该选哪个文件夹，先执行 `Unity DLL Bridge: 自动发现项目`。它会生成 `.dllbridge/discovery-report.md`，列出附近的 Unity 工程、`.csproj`、`.sln` 和 DLL 输出目录。
 

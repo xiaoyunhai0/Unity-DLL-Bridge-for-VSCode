@@ -69,7 +69,13 @@ async function getBuildCommand(build: BridgeBuildConfig, resolvedConfig: Resolve
     const dotnet = await resolveDotnetCommand(resolvedConfig.configDir, build.dotnetPath);
     return {
       command: dotnet.command,
-      args: ['build', resolveConfigPath(resolvedConfig.configDir, projectOrSolution), '-c', resolvedConfig.activeConfiguration],
+      args: [
+        'build',
+        resolveConfigPath(resolvedConfig.configDir, projectOrSolution),
+        '-c',
+        resolvedConfig.activeConfiguration,
+        ...getSolutionContextProperties(build, resolvedConfig.configDir)
+      ],
       note: `Dotnet: ${dotnet.label}${dotnet.version ? ` (${dotnet.version})` : ''}`
     };
   }
@@ -79,7 +85,12 @@ async function getBuildCommand(build: BridgeBuildConfig, resolvedConfig: Resolve
     const msbuild = await resolveMsbuildCommand(resolvedConfig.configDir, build.msbuildPath);
     return {
       command: msbuild.command,
-      args: [...(msbuild.argsPrefix ?? []), resolveConfigPath(resolvedConfig.configDir, projectOrSolution), `/p:Configuration=${resolvedConfig.activeConfiguration}`],
+      args: [
+        ...(msbuild.argsPrefix ?? []),
+        resolveConfigPath(resolvedConfig.configDir, projectOrSolution),
+        `/p:Configuration=${resolvedConfig.activeConfiguration}`,
+        ...getSolutionContextProperties(build, resolvedConfig.configDir)
+      ],
       note: `MSBuild: ${msbuild.label}${msbuild.version ? ` (${msbuild.version})` : ''}`
     };
   }
@@ -106,6 +117,34 @@ function firstSourceProject(resolvedConfig: ResolvedBridgeConfig): string {
   }
 
   return sourceProject;
+}
+
+function getSolutionContextProperties(build: BridgeBuildConfig, configDir: string): string[] {
+  if (!build.projectPath || !build.solutionPath) {
+    return [];
+  }
+
+  const solutionPath = resolveConfigPath(configDir, build.solutionPath);
+  const solutionDir = toMsbuildDirectory(path.dirname(solutionPath));
+  const solutionFileName = path.basename(solutionPath);
+  const solutionExt = path.extname(solutionPath);
+  const solutionName = path.basename(solutionPath, solutionExt);
+
+  return [
+    `/p:SolutionDir=${solutionDir}`,
+    `/p:SolutionPath=${toMsbuildPath(solutionPath)}`,
+    `/p:SolutionFileName=${solutionFileName}`,
+    `/p:SolutionName=${solutionName}`,
+    `/p:SolutionExt=${solutionExt}`
+  ];
+}
+
+function toMsbuildDirectory(directoryPath: string): string {
+  return `${toMsbuildPath(directoryPath).replace(/\/+$/, '')}/`;
+}
+
+function toMsbuildPath(filePath: string): string {
+  return path.normalize(filePath).split(path.sep).join('/');
 }
 
 function resolveMaybeRelativeCommand(configDir: string, command: string): string {

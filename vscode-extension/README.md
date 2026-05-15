@@ -145,6 +145,8 @@ dotnet sln <Unity.sln> add <gamelib.csproj>
 dotnet build <gamelib.csproj> -c Debug
 ```
 
+如果 `.csproj` 的生成后事件使用了 `$(SolutionDir)`，扩展会按 Unity `.sln` 自动补齐这个变量，避免出现 `*Undefined*Assets/Plugins`。
+
 Visual Studio 的“生成后事件复制 DLL/PDB”对应本扩展的 `生成并同步到 Unity`。`copyPdb: true` 会同步 PDB，便于调试。
 
 ## 诊断与自动发现
