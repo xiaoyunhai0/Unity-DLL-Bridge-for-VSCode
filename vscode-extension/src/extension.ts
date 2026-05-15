@@ -3,6 +3,7 @@ import { registerAddProjectToUnitySolutionCommand } from './commands/addProjectT
 import { registerBuildAllProjectsCommand } from './commands/buildAllProjects';
 import { registerBuildAndSyncCommand } from './commands/buildAndSync';
 import { registerBuildDllOnlyCommand } from './commands/buildDllOnly';
+import { registerBuildProjectCommand } from './commands/buildProject';
 import { registerConfigureDotnetPathCommand } from './commands/configureDotnetPath';
 import { registerConfigWizardCommand } from './commands/configWizard';
 import { registerCreateConfigTemplateCommand } from './commands/createConfigTemplate';
@@ -29,6 +30,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const statusBar = registerStatusBar(context);
   registerActionsView(context);
   registerBuildDllOnlyCommand(context, diagnostics);
+  registerBuildProjectCommand(context);
   registerBuildAndSyncCommand(context, diagnostics);
   registerBuildAllProjectsCommand(context, diagnostics);
   registerValidateConfigurationCommand(context);

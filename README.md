@@ -20,7 +20,8 @@ Unity 只引用 DLL，不直接暴露源码
 
 VSCode 扩展：
 
-- 在 VSCode 左侧 Activity Bar 提供 `DLL Bridge` 工作台，显示配置状态、错误提醒和项目摘要。
+- 在 VSCode 左侧 Activity Bar 提供 `DLL Bridge` 工作台，按 Visual Studio 的解决方案流程显示 `.sln`、已加入的 `.csproj` 和 DLL 输出状态。
+- 支持选择 Unity 生成的 `.sln`，再添加外部 `gamelib.csproj`，添加成功后自动写入 `dllbridge.json`。
 - 提供中文配置向导：选择 Unity 工程、外部 C# 工程文件夹、`.csproj` 或已有 DLL 输出文件夹后自动生成 `dllbridge.json`。
 - 生成多种 `dllbridge.json` 配置模板：只同步、dotnet、MSBuild、多项目。
 - 校验 Unity 工程路径、DLL 输出目录和目标插件目录。
@@ -30,7 +31,7 @@ VSCode 扩展：
 - 支持打开 Unity 生成的 `.sln`。
 - 支持 Debug / Release 等配置切换。
 - 支持 `仅同步 DLL`：同步已经存在的 DLL/PDB/XML/依赖 DLL。
-- 支持 `仅构建 DLL`：在 VSCode 中调用 `dotnet`、`msbuild` 或自定义命令，只构建 DLL。
+- 支持 `生成 DLL`：在 VSCode 中调用 `dotnet`、`msbuild` 或自定义命令，只构建 DLL。
 - 支持 `构建并同步`：调用 `dotnet`、`msbuild` 或自定义命令后同步。
 - 支持构建错误进入 VSCode Problems 面板，点击跳转源码行。
 - 支持监听外部 C# 源码变化后自动构建并同步。
@@ -76,12 +77,44 @@ UnityDllBridge-VSCode-<version>.vsix
 Extensions -> ... -> Install from VSIX...
 ```
 
-安装后，VSCode 左侧 Activity Bar 会出现 `DLL Bridge` 图标。点击后可以看到配置状态、错误/提醒、项目摘要，并直接执行创建配置、编辑配置、构建 DLL、同步、打开日志等操作。
+安装后，VSCode 左侧 Activity Bar 会出现 `DLL Bridge` 图标。点击后可以看到 Unity 解决方案、解决方案里的 C# 工程、已配置 DLL 项目和输出状态，并直接执行添加工程、生成 DLL、生成并同步、打开解决方案等操作。
 也可以在命令面板搜索 `Unity DLL Bridge` 使用所有命令。
 
-### 2. 创建配置
+### 2. 还原 Visual Studio 流程
 
-推荐使用配置向导，不再手写整份 JSON。在左侧 `DLL Bridge` 工作台点击：
+推荐优先走这个流程，它对应你在 Visual Studio 中的操作：
+
+```text
+Unity 双击任意脚本生成 .sln
+↓
+VSCode 左侧 DLL Bridge
+↓
+添加现有工程：选择 Unity .sln 和外部 gamelib.csproj
+↓
+侧边栏看到 gamelib 出现在“解决方案中的工程”
+↓
+点击“生成 DLL”
+↓
+dotnet build gamelib.csproj -c Debug
+↓
+生成 gamelib.dll / gamelib.pdb
+```
+
+具体操作：
+
+1. 在 Unity 中把代码编辑器设为 Visual Studio 或任意会生成 `.sln` 的编辑器，然后双击任意脚本，让 Unity 生成项目 `.sln`。
+2. 在 VSCode 中打开外部 C# 工程或工具工作区。
+3. 打开左侧 `DLL Bridge` 页面。
+4. 点击 `添加现有工程`，选择 Unity 生成的 `.sln`，再选择外部 `gamelib.csproj`。
+5. 扩展会执行 `dotnet sln <Unity.sln> add <gamelib.csproj>`，并自动写入 `dllbridge.json`。
+6. 添加成功后，侧边栏的 `解决方案中的工程` 会显示 `gamelib`，`已配置工程` 会显示输出 DLL 路径。
+7. 点击项目里的 `生成 gamelib.dll` 或顶部 `生成 DLL`。
+
+这里的 `.csproj` 代表整个外部 C# 大项目，会编译该项目包含的很多 `.cs` 文件，不是只转换一个 `.cs` 文件。
+
+### 3. 创建配置
+
+如果你的项目不是上面的解决方案流程，也可以使用配置向导，不再手写整份 JSON。在左侧 `DLL Bridge` 工作台点击：
 
 ```text
 配置向导
@@ -127,7 +160,7 @@ UnityDllBridge-Templates-<version>.zip
 
 模板包包含 `dllbridge.single.json`、`dllbridge.dotnet.json`、`dllbridge.msbuild.json` 和 `dllbridge.multi.json`。
 
-### 3. 配置示例
+### 4. 配置示例
 
 向导会生成类似下面的配置。你的目录如果是：
 
@@ -183,7 +216,7 @@ C# 工程：E:/Unity/project/gamelib-main/gamelib/GameLogic.csproj
 }
 ```
 
-### 4. 校验并同步
+### 5. 校验并同步
 
 常用命令：
 
@@ -194,7 +227,8 @@ Unity DLL Bridge: 添加工程到 Unity 解决方案
 Unity DLL Bridge: 打开 Unity 解决方案
 Unity DLL Bridge: 一键诊断环境
 Unity DLL Bridge: 自动发现项目
-Unity DLL Bridge: 仅构建 DLL
+Unity DLL Bridge: 生成当前工程 DLL
+Unity DLL Bridge: 生成 DLL
 Unity DLL Bridge: 仅同步 DLL
 Unity DLL Bridge: 构建并同步
 Unity DLL Bridge: 批量构建并同步
@@ -206,8 +240,8 @@ Unity DLL Bridge: 打开 Manifest
 
 如果 DLL 已经由 Visual Studio 或内部工具编译好，使用 `仅同步 DLL`。
 
-如果希望 VSCode 扩展触发构建，配置 `build.mode` 后使用 `仅构建 DLL` 或 `构建并同步`。
-其中 `仅构建 DLL` 只执行构建，不复制到 Unity；`构建并同步` 会先构建再同步。
+如果希望 VSCode 扩展触发构建，配置 `build.mode` 后使用 `生成 DLL` 或 `构建并同步`。
+其中 `生成 DLL` 只执行构建，不复制到 Unity；`构建并同步` 会先构建再同步。
 
 如果希望复刻 Visual Studio 中“右键解决方案 -> 添加 -> 现有项目”的操作，先让 Unity 生成 `.sln`，再执行：
 
@@ -215,13 +249,13 @@ Unity DLL Bridge: 打开 Manifest
 Unity DLL Bridge: 添加工程到 Unity 解决方案
 ```
 
-该命令会优先读取 `dllbridge.json` 中的 `unityProject` 和 `sourceProject`，自动查找 Unity `.sln`，然后执行类似：
+该命令会让你选择 Unity `.sln` 和外部 `.csproj`，然后执行类似：
 
 ```text
 dotnet sln project.sln add gamelib.csproj
 ```
 
-添加到 `.sln` 只是为了让 IDE 视图更接近 Visual Studio；实际 DLL/PDB 复制仍由 `构建并同步` 或 `仅同步 DLL` 负责。
+添加成功后会自动写入 `dllbridge.json`：`build.mode` 会设为 `dotnet`，`build.solutionPath` 指向 Unity `.sln`，`build.projectPath` 指向外部 `.csproj`，`projects[]` 会记录程序集名、输出目录和 Unity 目标目录。之后直接点击 `生成 DLL` 即可调用 `dotnet build <gamelib.csproj> -c Debug`。
 
 如果不知道该选哪个文件夹，先执行 `Unity DLL Bridge: 自动发现项目`。它会生成 `.dllbridge/discovery-report.md`，列出附近的 Unity 工程、`.csproj`、`.sln` 和 DLL 输出目录。
 
@@ -251,7 +285,7 @@ dotnet sln project.sln add gamelib.csproj
 }
 ```
 
-配置为 `dotnet` 后，`仅构建 DLL` 和 `构建并同步` 都会执行类似下面的命令：
+配置为 `dotnet` 后，`生成 DLL` 和 `构建并同步` 都会执行类似下面的命令：
 
 ```text
 dotnet build ../GameLogic/GameLogic.csproj -c Debug

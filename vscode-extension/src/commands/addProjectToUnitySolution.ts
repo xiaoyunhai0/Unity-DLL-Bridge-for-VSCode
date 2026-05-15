@@ -3,9 +3,11 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { loadBridgeConfig } from '../config/loadConfig';
-import { BridgeConfig } from '../config/types';
+import { BridgeProject, BridgeProjectConfiguration } from '../config/types';
+import { findFilesInRoots, getNearbySearchRoots, readCsprojInfo } from '../discovery/projectDiscovery';
 import { DotnetResolveResult, resolveDotnetCommand, shouldUseShell } from '../dotnet/dotnetLocator';
-import { getRelativePath, resolveConfigPath } from '../utils/pathUtils';
+import { solutionContainsProject } from '../solution/solutionParser';
+import { getRelativePath, isPlainObject, resolveConfigPath } from '../utils/pathUtils';
 
 interface SolutionCandidate extends vscode.QuickPickItem {
   path: string;
@@ -19,6 +21,16 @@ interface CommandResult {
   exitCode: number | null;
   lines: string[];
   dotnet: DotnetResolveResult;
+}
+
+interface ConfigDefaults {
+  configDir: string;
+  configPath?: string;
+  config?: Record<string, unknown>;
+  unityProject?: string;
+  solutionPath?: string;
+  projectPath?: string;
+  dotnetPath?: string;
 }
 
 export function registerAddProjectToUnitySolutionCommand(context: vscode.ExtensionContext): void {
@@ -38,18 +50,20 @@ export function registerAddProjectToUnitySolutionCommand(context: vscode.Extensi
         return;
       }
 
-      const solutionPath = await chooseSolutionPath(unityProject);
+      const solutionPath = await chooseSolutionPath(unityProject, defaults.solutionPath);
       if (!solutionPath) {
         return;
       }
 
-      const projectPath = defaults.projectPath ?? (await chooseProjectPath(workspaceFolder.uri.fsPath));
+      const projectPath = await chooseProjectPath(workspaceFolder.uri.fsPath, defaults.projectPath);
       if (!projectPath) {
         return;
       }
 
       if (await solutionContainsProject(solutionPath, projectPath)) {
-        vscode.window.showInformationMessage(`Unity 解决方案已包含外部工程：${path.basename(projectPath)}`);
+        const configPath = await upsertSolutionWorkflowConfig(workspaceFolder.uri.fsPath, workspaceFolder.name, defaults, unityProject, solutionPath, projectPath);
+        await vscode.commands.executeCommand('unityDllBridge.refreshActionsView');
+        vscode.window.showInformationMessage(`Unity 解决方案已包含 ${path.basename(projectPath)}，已写入 ${path.basename(configPath)}，现在可以直接点击“生成”。`);
         return;
       }
 
@@ -73,7 +87,9 @@ export function registerAddProjectToUnitySolutionCommand(context: vscode.Extensi
         return;
       }
 
-      vscode.window.showInformationMessage(`已添加 ${path.basename(projectPath)} 到 ${path.basename(solutionPath)}`);
+      const configPath = await upsertSolutionWorkflowConfig(workspaceFolder.uri.fsPath, workspaceFolder.name, defaults, unityProject, solutionPath, projectPath);
+      await vscode.commands.executeCommand('unityDllBridge.refreshActionsView');
+      vscode.window.showInformationMessage(`已添加 ${path.basename(projectPath)} 到 ${path.basename(solutionPath)}，并写入 ${path.basename(configPath)}。现在可以直接点击“生成”。`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       output.appendLine(`添加工程到 Unity 解决方案失败：${message}`);
@@ -88,22 +104,30 @@ export function registerAddProjectToUnitySolutionCommand(context: vscode.Extensi
   context.subscriptions.push(disposable);
 }
 
-async function getConfigDefaults(workspaceRoot: string): Promise<{ configDir: string; unityProject?: string; projectPath?: string; dotnetPath?: string }> {
+async function getConfigDefaults(workspaceRoot: string): Promise<ConfigDefaults> {
   try {
     const loaded = await loadBridgeConfig();
-    const config = loaded.config as Partial<BridgeConfig>;
+    const config = isPlainObject(loaded.config) ? loaded.config : {};
     const unityProject = typeof config.unityProject === 'string' ? resolveConfigPath(loaded.configDir, config.unityProject) : undefined;
-    const configuredProject =
-      typeof config.build?.projectPath === 'string'
+    const solutionPath = isPlainObject(config.build) && typeof config.build.solutionPath === 'string'
+      ? resolveConfigPath(loaded.configDir, config.build.solutionPath)
+      : undefined;
+    const configuredProject: string | undefined =
+      isPlainObject(config.build) && typeof config.build.projectPath === 'string'
         ? config.build.projectPath
-        : config.projects?.find((project) => typeof project.sourceProject === 'string')?.sourceProject;
+        : Array.isArray(config.projects)
+          ? getFirstConfiguredSourceProject(config.projects)
+          : undefined;
     const projectPath = configuredProject ? resolveConfigPath(loaded.configDir, configuredProject) : undefined;
 
     return {
       configDir: loaded.configDir,
+      configPath: loaded.configPath,
+      config,
       unityProject: unityProject && (await directoryExists(unityProject)) ? unityProject : undefined,
+      solutionPath: solutionPath && (await fileExists(solutionPath)) ? solutionPath : undefined,
       projectPath: projectPath && (await fileExists(projectPath)) ? projectPath : undefined,
-      dotnetPath: typeof config.build?.dotnetPath === 'string' ? config.build.dotnetPath : undefined
+      dotnetPath: isPlainObject(config.build) && typeof config.build.dotnetPath === 'string' ? config.build.dotnetPath : undefined
     };
   } catch {
     return { configDir: workspaceRoot };
@@ -122,15 +146,17 @@ async function chooseUnityProject(workspaceRoot: string): Promise<string | undef
   return selected?.[0]?.fsPath;
 }
 
-async function chooseSolutionPath(unityProject: string): Promise<string | undefined> {
+async function chooseSolutionPath(unityProject: string, configuredSolutionPath: string | undefined): Promise<string | undefined> {
   const candidates = await findSolutionCandidates(unityProject);
+  const allCandidates = unique([configuredSolutionPath, ...candidates].filter((candidate): candidate is string => Boolean(candidate)));
 
-  if (candidates.length > 0) {
+  if (allCandidates.length > 0) {
     const selected = await vscode.window.showQuickPick<SolutionCandidate>(
       [
-        ...candidates.map((candidate) => ({
+        ...allCandidates.map((candidate) => ({
           label: path.basename(candidate),
           description: getRelativePath(unityProject, candidate),
+          detail: candidate === configuredSolutionPath ? '当前配置的 Unity 解决方案' : undefined,
           path: candidate
         })),
         {
@@ -165,15 +191,17 @@ async function chooseSolutionPath(unityProject: string): Promise<string | undefi
   return selected?.[0]?.fsPath;
 }
 
-async function chooseProjectPath(workspaceRoot: string): Promise<string | undefined> {
-  const candidates = await findFiles(workspaceRoot, '.csproj', 5, 80);
+async function chooseProjectPath(workspaceRoot: string, configuredProjectPath: string | undefined): Promise<string | undefined> {
+  const candidates = await findFilesInRoots(getNearbySearchRoots(workspaceRoot), '.csproj', { maxDepth: 6, maxResults: 120 });
+  const allCandidates = unique([configuredProjectPath, ...candidates].filter((candidate): candidate is string => Boolean(candidate)));
 
-  if (candidates.length > 0) {
+  if (allCandidates.length > 0) {
     const selected = await vscode.window.showQuickPick<ProjectCandidate>(
       [
-        ...candidates.map((candidate) => ({
+        ...allCandidates.map((candidate) => ({
           label: path.basename(candidate),
           description: getRelativePath(workspaceRoot, candidate),
+          detail: candidate === configuredProjectPath ? '当前配置的外部 C# 工程' : path.dirname(candidate),
           path: candidate
         })),
         {
@@ -206,6 +234,150 @@ async function chooseProjectPath(workspaceRoot: string): Promise<string | undefi
   });
 
   return selected?.[0]?.fsPath;
+}
+
+async function upsertSolutionWorkflowConfig(
+  workspaceRoot: string,
+  workspaceName: string,
+  defaults: ConfigDefaults,
+  unityProject: string,
+  solutionPath: string,
+  projectPath: string
+): Promise<string> {
+  const configPath = defaults.configPath ?? path.join(workspaceRoot, 'dllbridge.json');
+  const configDir = defaults.configPath ? defaults.configDir : workspaceRoot;
+  const config = defaults.config ? { ...defaults.config } : createEmptyConfig(workspaceName);
+  const projectInfo = await readCsprojInfo(projectPath);
+  const assemblyName = projectInfo.assemblyName ?? path.basename(projectPath, '.csproj');
+  const targetFramework = projectInfo.targetFrameworks[0];
+  const debugOutputDir = inferOutputDir(projectPath, 'Debug', targetFramework);
+  const releaseOutputDir = inferOutputDir(projectPath, 'Release', targetFramework);
+  const projectEntry = createProjectEntry(configDir, unityProject, projectPath, assemblyName, debugOutputDir, releaseOutputDir);
+
+  config.version = 1;
+  config.name = typeof config.name === 'string' ? config.name : workspaceName;
+  config.unityProject = getRelativePath(configDir, unityProject);
+  config.defaultConfiguration = typeof config.defaultConfiguration === 'string' ? config.defaultConfiguration : 'Debug';
+  config.privacy = isPlainObject(config.privacy) ? { ...config.privacy, hideAbsolutePathsInManifest: true } : { hideAbsolutePathsInManifest: true };
+  config.watch = isPlainObject(config.watch) ? config.watch : { enabled: false, debounceSeconds: 2 };
+  config.build = createBuildConfig(configDir, config.build, solutionPath, projectPath);
+  config.projects = upsertProject(configDir, Array.isArray(config.projects) ? config.projects : [], projectEntry);
+
+  await fs.mkdir(path.dirname(configPath), { recursive: true });
+  await fs.writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
+  return configPath;
+}
+
+function createEmptyConfig(workspaceName: string): Record<string, unknown> {
+  return {
+    version: 1,
+    name: workspaceName,
+    defaultConfiguration: 'Debug',
+    privacy: {
+      hideAbsolutePathsInManifest: true
+    },
+    watch: {
+      enabled: false,
+      debounceSeconds: 2
+    },
+    projects: []
+  };
+}
+
+function getFirstConfiguredSourceProject(projects: unknown[]): string | undefined {
+  for (const project of projects) {
+    if (isPlainObject(project) && typeof project.sourceProject === 'string') {
+      return project.sourceProject;
+    }
+  }
+
+  return undefined;
+}
+
+function createBuildConfig(configDir: string, existingBuild: unknown, solutionPath: string, projectPath: string): Record<string, unknown> {
+  const build = isPlainObject(existingBuild) ? { ...existingBuild } : {};
+  build.mode = 'dotnet';
+  build.solutionPath = getRelativePath(configDir, solutionPath);
+  build.projectPath = getRelativePath(configDir, projectPath);
+  build.timeoutSeconds = Number.isFinite(build.timeoutSeconds) && Number(build.timeoutSeconds) > 0 ? build.timeoutSeconds : 120;
+  return build;
+}
+
+function createProjectEntry(
+  configDir: string,
+  unityProject: string,
+  projectPath: string,
+  assemblyName: string,
+  debugOutputDir: string,
+  releaseOutputDir: string
+): BridgeProject {
+  return {
+    id: toKebabCase(assemblyName),
+    name: assemblyName,
+    assemblyName,
+    sourceProject: getRelativePath(configDir, projectPath),
+    targetPluginPath: getRelativePath(configDir, path.join(unityProject, 'Assets', 'Plugins', assemblyName, 'Runtime')),
+    allowSourceCopy: false,
+    configurations: {
+      Debug: createProjectConfiguration(configDir, debugOutputDir, true, true),
+      Release: createProjectConfiguration(configDir, releaseOutputDir, false, false)
+    }
+  };
+}
+
+function createProjectConfiguration(configDir: string, outputDir: string, copyPdb: boolean, copyXml: boolean): BridgeProjectConfiguration {
+  return {
+    outputDir: getRelativePath(configDir, outputDir),
+    copyPdb,
+    copyXml,
+    backupBeforeOverwrite: true,
+    dependencies: []
+  };
+}
+
+function upsertProject(configDir: string, projects: unknown[], nextProject: BridgeProject): BridgeProject[] {
+  const sourceProjectPath = nextProject.sourceProject ? resolveConfigPath(configDir, nextProject.sourceProject) : undefined;
+  let didUpdate = false;
+
+  const normalizedProjects = projects.filter(isPlainObject).map((project) => {
+    if (!isSameProject(configDir, project, nextProject.assemblyName, sourceProjectPath)) {
+      return project as unknown as BridgeProject;
+    }
+
+    didUpdate = true;
+    return {
+      ...project,
+      ...nextProject,
+      targetPluginPath: typeof project.targetPluginPath === 'string' ? project.targetPluginPath : nextProject.targetPluginPath
+    } as unknown as BridgeProject;
+  });
+
+  if (!didUpdate) {
+    normalizedProjects.push(nextProject);
+  }
+
+  return normalizedProjects;
+}
+
+function isSameProject(configDir: string, project: Record<string, unknown>, assemblyName: string, sourceProjectPath: string | undefined): boolean {
+  if (sourceProjectPath && typeof project.sourceProject === 'string') {
+    return resolveConfigPath(configDir, project.sourceProject) === sourceProjectPath;
+  }
+
+  return typeof project.assemblyName === 'string' && project.assemblyName.toLowerCase() === assemblyName.toLowerCase();
+}
+
+function inferOutputDir(projectPath: string, configuration: 'Debug' | 'Release', targetFramework: string | undefined): string {
+  const projectDir = path.dirname(projectPath);
+  return targetFramework ? path.join(projectDir, 'bin', configuration, targetFramework) : path.join(projectDir, 'bin', configuration);
+}
+
+function toKebabCase(value: string): string {
+  return value
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase() || 'project';
 }
 
 async function findSolutionCandidates(unityProject: string): Promise<string[]> {
@@ -248,15 +420,6 @@ async function findFiles(root: string, extension: string, maxDepth: number, maxR
 
   await visit(root, 0);
   return results.sort();
-}
-
-async function solutionContainsProject(solutionPath: string, projectPath: string): Promise<boolean> {
-  const content = await fs.readFile(solutionPath, 'utf8');
-  const solutionDir = path.dirname(solutionPath);
-  const relativeProjectPath = getRelativePath(solutionDir, projectPath).replace(/\//g, '\\').toLowerCase();
-  const normalizedContent = content.replace(/\//g, '\\').toLowerCase();
-
-  return normalizedContent.includes(relativeProjectPath) || normalizedContent.includes(path.basename(projectPath).toLowerCase());
 }
 
 function runDotnetSlnAdd(solutionPath: string, projectPath: string, dotnet: DotnetResolveResult): Promise<CommandResult> {
@@ -321,4 +484,8 @@ async function directoryExists(directoryPath: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+function unique<T>(values: T[]): T[] {
+  return [...new Set(values)];
 }

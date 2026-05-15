@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
 import { runBuild } from '../build/buildRunner';
 import { resolveConfigForActiveConfiguration } from '../config/resolveConfig';
+import { ResolvedBridgeConfig } from '../config/types';
 import { writeSyncLog } from '../sync/syncLog';
 import { formatTimestampForFileName } from '../utils/pathUtils';
 import { showValidationReport } from './validationReport';
 
 export function registerBuildDllOnlyCommand(context: vscode.ExtensionContext, diagnostics?: vscode.DiagnosticCollection): void {
-  const disposable = vscode.commands.registerCommand('unityDllBridge.buildDllOnly', async () => {
+  const disposable = vscode.commands.registerCommand('unityDllBridge.buildDllOnly', async (projectId?: string) => {
     try {
       const { validation, resolvedConfig } = await resolveConfigForActiveConfiguration(context, {
         requireArtifacts: false
@@ -18,14 +19,15 @@ export function registerBuildDllOnlyCommand(context: vscode.ExtensionContext, di
         return;
       }
 
+      const buildConfig = createProjectBuildConfig(resolvedConfig, projectId);
       const result = await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
-          title: 'Unity DLL Bridge: 仅构建 DLL',
+          title: `Unity DLL Bridge: 生成 DLL${projectId ? ` (${projectId})` : ''}`,
           cancellable: false
         },
         async () => {
-          const buildResult = await runBuild(resolvedConfig, diagnostics);
+          const buildResult = await runBuild(buildConfig, diagnostics);
           const timestamp = new Date();
           const logPath = await writeSyncLog(
             resolvedConfig.workspaceRoot,
@@ -59,9 +61,31 @@ export function registerBuildDllOnlyCommand(context: vscode.ExtensionContext, di
       vscode.window.showInformationMessage(`DLL Bridge DLL 构建完成：${resolvedConfig.activeConfiguration}，${result.buildResult.durationMs}ms${warningSummary}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      vscode.window.showErrorMessage(`DLL Bridge 仅构建 DLL 失败：${message}`);
+      vscode.window.showErrorMessage(`DLL Bridge 生成 DLL 失败：${message}`);
     }
   });
 
   context.subscriptions.push(disposable);
+}
+
+function createProjectBuildConfig(resolvedConfig: ResolvedBridgeConfig, projectId: string | undefined): ResolvedBridgeConfig {
+  if (!projectId) {
+    return resolvedConfig;
+  }
+
+  const project = resolvedConfig.config.projects.find((candidate) => candidate.id === projectId || candidate.assemblyName === projectId || candidate.name === projectId);
+  if (!project?.sourceProject) {
+    throw new Error(`没有找到可生成的工程：${projectId}`);
+  }
+
+  return {
+    ...resolvedConfig,
+    config: {
+      ...resolvedConfig.config,
+      build: {
+        ...(resolvedConfig.config.build ?? {}),
+        projectPath: project.sourceProject
+      }
+    }
+  };
 }

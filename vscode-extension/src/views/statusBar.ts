@@ -19,14 +19,14 @@ export function registerStatusBar(context: vscode.ExtensionContext): StatusBarCo
     const selected = await vscode.window.showQuickPick(
       [
         {
-          label: '配置向导',
-          description: '选择 Unity 工程、C# 项目或 DLL 输出目录，自动生成 dllbridge.json',
-          command: 'unityDllBridge.configWizard'
+          label: '添加现有工程',
+          description: '选择 Unity .sln 和外部 gamelib.csproj，自动写入配置',
+          command: 'unityDllBridge.addProjectToUnitySolution'
         },
         {
-          label: '选择配置',
-          description: '选择 Debug / Release 等配置',
-          command: 'unityDllBridge.selectConfiguration'
+          label: '生成 DLL',
+          description: '调用 dotnet/msbuild/custom 构建外部 C# 工程',
+          command: 'unityDllBridge.buildDllOnly'
         },
         {
           label: '构建并同步',
@@ -34,9 +34,14 @@ export function registerStatusBar(context: vscode.ExtensionContext): StatusBarCo
           command: 'unityDllBridge.buildAndSync'
         },
         {
-          label: '批量构建并同步',
-          description: '构建后同步配置中的所有 DLL 项目',
-          command: 'unityDllBridge.buildAllProjects'
+          label: '打开 Unity 解决方案',
+          description: '打开 Unity 生成的 .sln',
+          command: 'unityDllBridge.openUnitySolution'
+        },
+        {
+          label: '选择配置',
+          description: '选择 Debug / Release 等配置',
+          command: 'unityDllBridge.selectConfiguration'
         },
         {
           label: '一键诊断环境',
@@ -44,29 +49,9 @@ export function registerStatusBar(context: vscode.ExtensionContext): StatusBarCo
           command: 'unityDllBridge.runEnvironmentDiagnostics'
         },
         {
-          label: '自动发现项目',
-          description: '扫描附近 Unity 工程、C# 工程和 DLL 输出目录',
-          command: 'unityDllBridge.discoverProjects'
-        },
-        {
-          label: '添加工程到 Unity 解决方案',
-          description: '把外部 .csproj 加入 Unity 生成的 .sln',
-          command: 'unityDllBridge.addProjectToUnitySolution'
-        },
-        {
-          label: '打开 Unity 解决方案',
-          description: '自动查找并打开 Unity 生成的 .sln',
-          command: 'unityDllBridge.openUnitySolution'
-        },
-        {
           label: '配置 dotnet 路径',
           description: '自动检测失败时，选择 dotnet 安装目录或可执行文件',
           command: 'unityDllBridge.configureDotnetPath'
-        },
-        {
-          label: '仅构建 DLL',
-          description: '只执行 dotnet/msbuild/custom 构建，不同步到 Unity',
-          command: 'unityDllBridge.buildDllOnly'
         },
         {
           label: '开关自动构建同步',
@@ -84,24 +69,9 @@ export function registerStatusBar(context: vscode.ExtensionContext): StatusBarCo
           command: 'unityDllBridge.validateConfiguration'
         },
         {
-          label: '仅同步 DLL',
-          description: '复制已有 DLL/PDB/XML 到 Unity 工程',
-          command: 'unityDllBridge.syncOnly'
-        },
-        {
-          label: '打开同步日志',
-          description: '打开 .dllbridge/logs/latest.log',
-          command: 'unityDllBridge.openSyncLog'
-        },
-        {
-          label: '打开 Manifest',
-          description: '打开 Unity 目标目录中的 manifest.json',
-          command: 'unityDllBridge.openManifest'
-        },
-        {
-          label: '创建配置模板',
-          description: '在工作区生成 dllbridge.json 模板',
-          command: 'unityDllBridge.createConfigTemplate'
+          label: '配置向导',
+          description: '非解决方案流程时，选择 Unity 工程、C# 项目或 DLL 输出目录',
+          command: 'unityDllBridge.configWizard'
         }
       ],
       { placeHolder: 'Unity DLL Bridge' }

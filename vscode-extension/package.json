@@ -42,6 +42,7 @@
     "onCommand:unityDllBridge.configWizard",
     "onCommand:unityDllBridge.createConfigTemplate",
     "onCommand:unityDllBridge.selectConfiguration",
+    "onCommand:unityDllBridge.buildProject",
     "onCommand:unityDllBridge.buildDllOnly",
     "onCommand:unityDllBridge.buildAndSync",
     "onCommand:unityDllBridge.buildAllProjects"
@@ -129,8 +130,12 @@
         "title": "Unity DLL Bridge: 选择 Debug/Release 配置"
       },
       {
+        "command": "unityDllBridge.buildProject",
+        "title": "Unity DLL Bridge: 生成当前工程 DLL"
+      },
+      {
         "command": "unityDllBridge.buildDllOnly",
-        "title": "Unity DLL Bridge: 仅构建 DLL"
+        "title": "Unity DLL Bridge: 生成 DLL"
       },
       {
         "command": "unityDllBridge.buildAndSync",

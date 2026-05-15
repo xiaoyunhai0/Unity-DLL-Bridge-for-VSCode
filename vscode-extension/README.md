@@ -16,8 +16,9 @@ Unity Assets/Plugins
 
 ## 主要能力
 
-- 左侧 Activity Bar 提供 `DLL Bridge` 工作台，展示配置状态、错误、提醒和项目摘要。
+- 左侧 Activity Bar 提供 `DLL Bridge` 工作台，按 Visual Studio 的解决方案流程展示 Unity `.sln`、解决方案中的 `.csproj`、已配置 DLL 项目和输出状态。
 - 状态栏提供常用操作入口。
+- 支持选择 Unity 生成的 `.sln`，再添加外部 `gamelib.csproj`，添加成功后自动写入 `dllbridge.json`。
 - 提供中文配置向导：选择 Unity 工程、外部 C# 工程文件夹、`.csproj` 或已有 DLL 输出文件夹后自动生成 `dllbridge.json`。
 - 自动检测 dotnet：构建和添加解决方案时会检查 PATH、`DOTNET_ROOT` 和常见安装目录；检测不到时可在 VSCode 中选择 dotnet 安装文件夹。
 - 一键诊断 Unity、`.sln`、`.csproj`、dotnet、MSBuild、DLL/PDB 环境。
@@ -26,7 +27,7 @@ Unity Assets/Plugins
 - 支持打开 Unity 生成的 `.sln`。
 - 生成多种 `dllbridge.json` 配置模板：只同步、dotnet、MSBuild、多项目。
 - 支持 Debug / Release 等配置切换。
-- `仅构建 DLL`：只在 VSCode 中调用 `dotnet`、`msbuild` 或自定义命令构建 DLL，不同步到 Unity。
+- `生成 DLL`：只在 VSCode 中调用 `dotnet`、`msbuild` 或自定义命令构建 DLL，不同步到 Unity。
 - `仅同步 DLL`：同步已经由 Visual Studio、Build Tools 或内部工具生成的 DLL/PDB/XML/依赖 DLL。
 - `构建并同步`：先构建外部 C# 工程，再同步产物到 Unity。
 - 构建错误进入 VSCode Problems 面板，点击跳转源码行。
@@ -43,32 +44,38 @@ Unity Assets/Plugins
 点击后可以看到：
 
 ```text
-配置健康状态
-当前配置和项目数量
+Unity 解决方案
+解决方案中的 C# 工程
+已配置 DLL 项目和输出状态
 错误 / 提醒列表
-配置向导 / 编辑配置 / 创建模板
-添加工程到解决方案 / 构建与同步操作
-一键诊断 / 自动发现 / 调试配置
-日志和 manifest 入口
+添加现有工程 / 生成 DLL / 生成并同步
+编辑配置 / 诊断环境 / 日志入口
 ```
 
 也可以打开命令面板，搜索 `Unity DLL Bridge` 使用全部命令。
 
-如果还没有 `dllbridge.json`，优先点击左侧 `DLL Bridge` 页面里的 `配置向导`。
+如果还没有 `dllbridge.json`，优先点击左侧 `DLL Bridge` 页面里的 `添加现有工程`，选择 Unity `.sln` 和外部 `.csproj`。
 如果配置有错误，左侧工作台会显示错误列表，并提供 `编辑配置` 按钮直接打开 `dllbridge.json` 修改。
 
 ## 推荐流程
 
-1. 在 VSCode 中打开外部 C# 工程工作区。
-2. 打开左侧 `DLL Bridge` 插件页面。
-3. 执行 `配置向导`。
-4. 依次选择 Unity 工程根目录、外部 C# 工程文件夹或已有 DLL 输出文件夹、Unity 目标目录。
-5. 如需让 Unity `.sln` 像 Visual Studio 一样显示外部项目，执行 `添加工程到 Unity 解决方案`。
-6. 如果不知道路径是否正确，执行 `自动发现项目` 或 `一键诊断环境`。
-7. 如果选择了 `dotnet build` 且机器没有配置 PATH，执行 `配置 dotnet 路径`，选择 dotnet 安装文件夹。
-8. 执行 `校验配置`。
-9. 根据需要执行 `仅构建 DLL`、`仅同步 DLL`、`构建并同步` 或 `批量构建并同步`。
-10. 回到 Unity 刷新资源，或配合可选 Unity Editor 插件查看 manifest。
+优先使用这条流程，它对应 Visual Studio 里的“打开 Unity 解决方案 -> 添加现有工程 -> 生成”：
+
+1. 在 Unity 中双击任意脚本，让 Unity 生成项目 `.sln`。
+2. 在 VSCode 中打开外部 C# 工程或工具工作区。
+3. 打开左侧 `DLL Bridge` 插件页面。
+4. 点击 `添加现有工程`，选择 Unity 生成的 `.sln`，再选择外部 `gamelib.csproj`。
+5. 添加成功后，侧边栏会在 `解决方案中的工程` 显示 `gamelib`。
+6. 点击项目里的 `生成 gamelib.dll`，或点击顶部 `生成 DLL`。
+7. 需要复制到 Unity 时，再点击 `生成并同步到 Unity`。
+
+这里的 `.csproj` 代表整个外部 C# 大项目，会编译该项目包含的很多 `.cs` 文件，不是只转换一个 `.cs` 文件。
+
+如果不是解决方案流程，也可以执行 `配置向导`，依次选择 Unity 工程根目录、外部 C# 工程文件夹或已有 DLL 输出文件夹、Unity 目标目录。
+
+如果不知道路径是否正确，执行 `自动发现项目` 或 `一键诊断环境`。
+
+如果选择了 `dotnet build` 且机器没有配置 PATH，执行 `配置 dotnet 路径`，选择 dotnet 安装文件夹。
 
 向导里路径应该这样选：
 
@@ -93,7 +100,8 @@ Unity 目标目录：建议选 Assets/Plugins/<程序集名>/Runtime
 | `Unity DLL Bridge: 选择 Debug/Release 配置` | 选择 Debug / Release 或其他配置。 |
 | `Unity DLL Bridge: 校验配置` | 校验 Unity 工程路径、输出目录、目标目录和安全配置。 |
 | `Unity DLL Bridge: 打开配置文件` | 打开 `dllbridge.json`，即使配置内容有错误也可以直接修改。 |
-| `Unity DLL Bridge: 仅构建 DLL` | 执行配置的构建命令，不复制文件到 Unity。 |
+| `Unity DLL Bridge: 生成当前工程 DLL` | 从侧边栏项目卡片触发，按该项目的 `.csproj` 生成对应 DLL。 |
+| `Unity DLL Bridge: 生成 DLL` | 执行配置的构建命令，不复制文件到 Unity。 |
 | `Unity DLL Bridge: 仅同步 DLL` | 将已有 DLL/PDB/XML/依赖 DLL 同步到 Unity。 |
 | `Unity DLL Bridge: 构建并同步` | 先执行构建命令，再同步产物到 Unity。 |
 | `Unity DLL Bridge: 批量构建并同步` | 构建后同步配置中的所有 DLL 项目。 |
@@ -104,19 +112,39 @@ Unity 目标目录：建议选 Assets/Plugins/<程序集名>/Runtime
 
 ## 对应 Visual Studio 流程
 
-Visual Studio 里的“右键解决方案 -> 添加 -> 现有项目”对应：
+Visual Studio 里的流程：
+
+```text
+选择 Unity 项目的解决方案
+↓
+添加现有项目 gamelib.csproj
+↓
+在解决方案里看到 gamelib
+↓
+点击生成
+↓
+生成 gamelib.dll
+```
+
+在本扩展中对应：
 
 ```text
 Unity DLL Bridge: 添加工程到 Unity 解决方案
 ```
 
-命令会读取配置中的 `unityProject` 和 `sourceProject`，自动查找 Unity `.sln`，并执行：
+命令会让你选择 Unity `.sln` 和外部 `.csproj`，并执行：
 
 ```text
 dotnet sln <Unity.sln> add <gamelib.csproj>
 ```
 
-Visual Studio 的“生成后事件复制 DLL/PDB”对应本扩展的 `构建并同步`。`copyPdb: true` 会同步 PDB，便于调试。
+添加成功后会自动写入 `dllbridge.json`，侧边栏会显示解决方案里的 `gamelib`。点击 `生成 DLL` 会执行：
+
+```text
+dotnet build <gamelib.csproj> -c Debug
+```
+
+Visual Studio 的“生成后事件复制 DLL/PDB”对应本扩展的 `生成并同步到 Unity`。`copyPdb: true` 会同步 PDB，便于调试。
 
 ## 诊断与自动发现
 
@@ -215,7 +243,7 @@ workspace/.dllbridge/dllbridge.json
 }
 ```
 
-配置为 `dotnet` 后，`仅构建 DLL` 和 `构建并同步` 会执行类似命令：
+配置为 `dotnet` 后，`生成 DLL` 和 `构建并同步` 会执行类似命令：
 
 ```text
 dotnet build ../GameLogic/GameLogic.csproj -c Debug
@@ -357,7 +385,7 @@ checksums.txt
 
 `找不到主 DLL`：
 
-- 先构建外部 C# 工程，或使用 `仅构建 DLL`。
+- 先构建外部 C# 工程，或使用 `生成 DLL`。
 - 检查 `assemblyName` 和当前配置的 `outputDir` 是否匹配真实输出。
 
 `targetPluginPath 必须位于 Assets 内`：
