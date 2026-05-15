@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag, for example v0.1.0'
+        description: 'Release tag, for example v1.0.0'
         required: true
-        default: 'v0.1.0'
+        default: 'v1.0.0'
 
 permissions:
   contents: write
@@ -64,6 +64,8 @@ jobs:
             releases/checksums.txt
           body: |
             ## Unity DLL Bridge ${{ steps.release_tag.outputs.tag }}
+
+            Unity DLL Bridge 正式版，用于在 VSCode 中完成 Unity 外部 C# 工程的 DLL 构建、诊断与同步。
 
             离线环境请下载 `UnityDllBridge-VSCode-*.vsix` 安装 VSCode 扩展。
 

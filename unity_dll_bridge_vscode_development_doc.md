@@ -18,9 +18,9 @@ Unity 引用 DLL 运行
 
 也就是说，Unity 工程只消费编译产物，不直接暴露业务源码。
 
-这个工具的目标不是重新发明一个 C# 编译器，也不是马上替代公司已有的 Visual Studio 编译流程，而是先把 **已有 DLL 产物安全、可追踪、可重复地同步到 Unity 工程**。
+这个工具的目标不是重新发明一个 C# 编译器，也不是替代公司已有的 Visual Studio 编译流程，而是把 **外部 C# 工程生成 DLL、诊断构建环境、同步到 Unity 工程** 这条链路做稳。
 
-后续版本再逐步接入 MSBuild / dotnet，让 VSCode 内部也能一键 Build & Sync。
+正式版已经支持 `syncOnly`、`dotnet`、`msbuild` 和 `custom` 构建模式，既能只同步已有 DLL，也能在 VSCode 中触发 Build & Sync。
 
 ## 2. 工具定位
 
@@ -30,7 +30,7 @@ Unity 引用 DLL 运行
 
 > 一个离线可用的 VSCode 扩展 + 可选 Unity Editor 插件，用于把独立 C# 工程生成的 DLL/PDB/XML 安全同步到 Unity 工程，并提供配置校验、版本记录、日志和权限隔离保护。
 
-第一版重点是：
+正式版重点是：
 
 - 不复制源码。
 - 不改变公司现有编译方式。
@@ -118,30 +118,30 @@ VSCode 扩展是第一优先级，负责：
 
 ### 4.2 Unity Editor 插件
 
-Unity 插件是增强体验，不应阻塞 v0.1。
+Unity 插件是增强体验，不阻塞 VSCode 主流程。
 
-第一版只需要：
+当前提供：
 
 - 提供菜单 `Tools/DLL Bridge/Refresh`。
 - 调用 `AssetDatabase.Refresh()`。
 - 可选查看 `manifest.json`。
 
-后续版本再做：
+后续迭代可继续增强：
 
 - 自动监听刷新信号。
 - DLL 引用检查。
 - Runtime / Editor DLL 校验。
 - Unity 版本兼容提示。
 
-## 5. v0.1 范围
+## 5. 正式版范围
 
-v0.1 的核心是 **外部 C# 工程 DLL 工作流**。
+正式版的核心是 **外部 C# 工程 DLL 工作流**。
 
-第一版同时支持“只同步已有 DLL”和“在 VSCode 中调用外部构建工具生成 DLL”。使用者可以继续用 Visual Studio、Build Tools、公司内部脚本或 CI 生成 DLL，也可以在 `build.mode` 配置为 `dotnet`、`msbuild` 或 `custom` 后用扩展触发构建。
+正式版同时支持“只同步已有 DLL”和“在 VSCode 中调用外部构建工具生成 DLL”。使用者可以继续用 Visual Studio、Build Tools、公司内部脚本或 CI 生成 DLL，也可以在 `build.mode` 配置为 `dotnet`、`msbuild` 或 `custom` 后用扩展触发构建。
 
-### 5.1 v0.1 必做功能
+### 5.1 已交付功能
 
-v0.1 必须做到：
+正式版必须做到：
 
 1. VSCode 中执行 `Unity DLL Bridge: Sync Only`。
 2. 读取 `dllbridge.json`。
@@ -156,9 +156,9 @@ v0.1 必须做到：
 11. Unity 中可以手动 Refresh。
 12. VSCode 扩展可以打成 VSIX 离线安装。
 
-### 5.2 v0.1 不做功能
+### 5.2 非目标范围
 
-第一版不做：
+正式版不把这些能力作为主路径：
 
 - 自动编译 C# Project。
 - 自动寻找所有 DLL。
@@ -169,7 +169,7 @@ v0.1 必须做到：
 - 自动修改 Unity asmdef。
 - 自动打权限分发包。
 
-这些能力有价值，但都应该放到后续版本。
+这些能力有价值，但不是正式版主路径。
 
 ## 6. 推荐使用流程
 
@@ -202,18 +202,20 @@ v0.1 必须做到：
 
 最终使用者不需要手动敲命令。
 
-允许工具内部在后续版本调用 MSBuild / dotnet / 自定义脚本，但产品入口必须是 VSCode 命令、按钮或菜单。
+允许工具内部调用 MSBuild / dotnet / 自定义脚本，但产品入口必须是 VSCode 命令、按钮或菜单。
 
 开发者可以在云端服务器或在线环境使用 npm 进行构建和打包，但离线使用者只安装 GitHub Release 中的 `.vsix`。
 
 ### 6.4 GitHub Release 交付流程
 
-v0.1 先采用本地打包、手动上传 Release 的方式：
+正式版采用本地打包 + GitHub Actions Release 的方式：
 
 ```text
 npm install
 npm run compile
-npm run package
+npm run release:local
+git tag v1.0.0
+git push origin v1.0.0
 ```
 
 Release 建议包含：
@@ -234,7 +236,7 @@ checksums.txt
 UnityDllBridge-UnityPlugin-<version>.unitypackage
 ```
 
-v0.1 不强制做 GitHub Actions 自动 Release。自动化发布可以放到 v0.2，在 MVP 稳定后再处理版本号、artifact 和 checksum。
+GitHub Actions 会在推送 `v*` tag 后自动构建 VSIX、模板包、Unity 插件包、离线安装说明和 checksums，并发布到 GitHub Release。
 
 ## 7. 配置文件设计
 
@@ -258,7 +260,7 @@ dllbridge.json
 不要相对 VSCode 进程目录解析。
 ```
 
-### 7.1 v0.1 配置示例
+### 7.1 配置示例
 
 ```json
 {
@@ -305,9 +307,9 @@ dllbridge.json
 }
 ```
 
-### 7.2 后续构建配置示例
+### 7.2 构建配置示例
 
-后续版本再加入构建能力：
+正式版支持构建配置：
 
 ```json
 {
@@ -330,7 +332,7 @@ dotnet
 custom
 ```
 
-v0.1 只要求 `syncOnly`。
+正式版已支持以上构建模式。
 
 ### 7.3 字段说明
 
@@ -355,7 +357,7 @@ v0.1 只要求 `syncOnly`。
 
 ## 8. VSCode 命令
 
-v0.1 提供：
+正式版提供：
 
 ```text
 Unity DLL Bridge: Sync Only
@@ -434,7 +436,7 @@ Create Config Template
 7. 在工作区 .dllbridge/logs/ 写入 latest.log 和时间戳日志。
 ```
 
-v0.2 再提供：
+后续可补充：
 
 ```text
 Unity DLL Bridge: Clean Target DLLs
@@ -499,7 +501,7 @@ Assets/Plugins/GameLogic/.dllbridge-backup/2026-05-12_103000/
 
 ### 9.4 多 DLL 依赖
 
-第一版至少支持显式声明依赖 DLL：
+正式版支持显式声明依赖 DLL：
 
 ```json
 {
@@ -510,7 +512,7 @@ Assets/Plugins/GameLogic/.dllbridge-backup/2026-05-12_103000/
 }
 ```
 
-工具不要在 v0.1 自动猜测所有依赖，否则容易误复制内部 DLL 或测试 DLL。
+工具不要自动猜测所有依赖，否则容易误复制内部 DLL 或测试 DLL。
 
 ## 10. manifest 设计
 
@@ -562,7 +564,7 @@ manifest 用途：
 
 - 默认不写绝对路径。
 - Git 信息获取失败不能导致同步失败。
-- dirty 状态只作为参考，不作为 v0.1 阻断条件。
+- dirty 状态只作为参考，不作为同步阻断条件。
 
 ## 11. 日志设计
 
@@ -597,9 +599,9 @@ manifest 用途：
 
 ## 12. Unity 插件设计
 
-### 12.1 v0.1 菜单
+### 12.1 Unity 菜单
 
-Unity 插件第一版只提供：
+Unity 插件提供：
 
 ```text
 Tools/DLL Bridge/Refresh
@@ -634,7 +636,7 @@ Assets/Plugins/**/manifest.json
 
 ### 12.2 后续自动刷新
 
-v0.2 再加入自动刷新信号：
+后续可加入自动刷新信号：
 
 ```text
 Assets/Plugins/.dllbridge-refresh
@@ -671,7 +673,7 @@ Unity 每 1 秒低频检测
 Unity 2021/2022/2023 项目通常需要关注 .NET Standard 2.0 / 2.1 或 .NET Framework 兼容性。
 ```
 
-工具 v0.1 不强制判断，但配置校验可以提示：
+工具当前不强制判断，但配置校验可以提示：
 
 ```text
 请确认 GameLogic.dll 的 Target Framework 与 Unity Player Settings 中的 Api Compatibility Level 兼容。
@@ -692,13 +694,13 @@ Assets/Plugins/GameLogic/Editor/GameLogic.Editor.dll
 - Editor DLL 可以引用 `UnityEditor.dll`，但必须放在 Editor 目录。
 - 业务 Runtime DLL 不应引用测试 DLL。
 
-v0.1 只写入提醒，v0.3 再做自动检查。
+当前先写入提醒，后续可做自动检查。
 
 ### 13.3 第三方依赖
 
 如果 `GameLogic.dll` 依赖第三方 DLL，必须同步依赖 DLL，否则 Unity 可能运行时报错。
 
-v0.1 推荐显式配置依赖，不自动扫描。
+推荐显式配置依赖，不自动扫描。
 
 ### 13.4 PDB 和调试信息
 
@@ -743,7 +745,7 @@ manifest 默认隐藏绝对路径。
 
 ### 14.3 Debug / Release 权限包
 
-后续版本可以提供两种分发包：
+后续可选提供两种分发包：
 
 Internal Debug 包：
 
@@ -762,7 +764,7 @@ manifest.json
 checksums.txt
 ```
 
-v0.1 暂不实现自动打包，但文档和配置要为它留位置。
+自动打包不是当前主流程，但文档和配置保留扩展位置。
 
 ## 15. 错误提示
 
@@ -799,7 +801,7 @@ targetPluginPath 不在 unityProject 目录内。
 
 ### 15.5 构建工具缺失
 
-这是 v0.2 之后才需要的提示：
+这是构建模式下需要的提示：
 
 ```text
 没有找到 MSBuild 或 dotnet。
@@ -837,7 +839,7 @@ vscode-extension/
 └─ README.md
 ```
 
-v0.2 再增加：
+后续可增加：
 
 ```text
 src/build/
@@ -858,14 +860,14 @@ unity-plugin/
          └─ DllBridgeManifestWindow.cs
 ```
 
-v0.2 再增加：
+后续可增加：
 
 ```text
 DllBridgeWatcher.cs
 DllBridgeSettings.cs
 ```
 
-v0.3 再增加：
+后续可增加：
 
 ```text
 DllBridgeValidator.cs
@@ -950,9 +952,9 @@ DllBridgeValidator.cs
 VSCode 同步后，Unity 能自动刷新，并能查看当前 DLL 信息。
 ```
 
-## 18. MVP 验收标准
+## 18. 正式版验收标准
 
-最小可交付版本必须满足：
+正式版必须满足：
 
 ```text
 1. 可以读取 dllbridge.json。
@@ -1006,6 +1008,6 @@ DLL 引用检查 -> Runtime/Editor 自动校验 -> 分发包 -> Dashboard
 - 降低离线环境安装和使用成本。
 - 降低人工复制导致的低级错误。
 
-第一版只要把 **VSCode 一键同步已有 DLL 到 Unity** 做稳，就已经能明显提升实际开发效率。
+正式版只要把 **VSCode 一键生成/同步外部 DLL 到 Unity** 做稳，就已经能明显提升实际开发效率。
 
-等这个流程稳定后，再加入 Build & Sync、Unity 自动刷新和依赖校验，工具会自然长成完整的团队工作流，而不是一开始就做得过重。
+在这个流程稳定后，继续增强 Unity 自动刷新、依赖校验和 Runtime/Editor 检查，工具会自然长成完整的团队工作流。
