@@ -59,7 +59,9 @@ Unity 插件只放在 `Assets/Editor`，不会进入运行时构建。
 
 这条流程最接近 Visual Studio 里的“添加现有项目 -> 生成”：
 
-1. 在 Unity 中双击任意脚本，让 Unity 生成项目 `.sln`。
+首次使用前，先让 Unity 生成解决方案文件。推荐在 Unity 里把 External Script Editor 设置为 Visual Studio，然后双击任意 C# 脚本；Unity 会在工程根目录生成或刷新 `project.sln` 和对应的 Unity `.csproj`。如果你的 Unity 工程根目录还没有 `.sln`，先完成这一步，再回到 VSCode 使用 DLL Bridge。
+
+1. 确认 Unity 工程根目录已经存在 `.sln`，例如 `E:\Unity\project\project-main\project\project.sln`。
 2. 在 VSCode 中打开外部 C# 工程或当前工具工作区。
 3. 点击左侧 Activity Bar 的 `DLL Bridge`。
 4. 点击 `添加现有工程`。
@@ -92,6 +94,8 @@ E:\Unity\project\gamelib-main\gamelib\GameLib.csproj
 - Unity `.sln` 选择 `E:\Unity\project\project-main\project\project.sln`。
 - 外部 `.csproj` 选择 `E:\Unity\project\gamelib-main\gamelib\GameLib.csproj`。
 - 同步目标如果项目当前就是直接放 DLL 到 `Assets/Plugins`，选择 `E:\Unity\project\project-main\project\Assets\Plugins`。
+
+如果找不到 `project.sln`，回到 Unity 双击一个脚本，或执行 Unity 的重新生成项目文件操作。生成后再执行 `添加现有工程`。
 
 扩展会在 `dotnet build` 时传入类似下面的解决方案变量：
 

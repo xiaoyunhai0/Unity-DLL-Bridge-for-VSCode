@@ -48,6 +48,26 @@ jobs:
         working-directory: vscode-extension
         run: npm run release:local
 
+      - name: Remove existing release for this tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release_tag.outputs.tag }}
+        shell: bash
+        run: |
+          release_id="$(curl -fsSL \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" \
+            | node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>console.log(JSON.parse(s).id));" \
+            || true)"
+
+          if [ -n "$release_id" ]; then
+            curl -fsSL -X DELETE \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/${release_id}"
+          fi
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:

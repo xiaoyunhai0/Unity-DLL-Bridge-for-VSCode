@@ -31,7 +31,9 @@ checksums.txt
 
 优先使用“添加现有工程”，它最接近 Visual Studio 的操作方式。
 
-1. 在 Unity 中双击任意脚本，让 Unity 生成项目 `.sln`。
+第一次使用前，先让 Unity 生成解决方案文件。推荐在 Unity 里把 External Script Editor 设置为 Visual Studio，然后双击任意 C# 脚本；Unity 会在工程根目录生成或刷新 `project.sln` 和 Unity 自己的 `.csproj`。如果工程根目录还没有 `.sln`，先完成这一步。
+
+1. 确认 Unity 工程根目录已经存在 `.sln`，例如 `E:\Unity\project\project-main\project\project.sln`。
 2. 在 VSCode 中打开外部 C# 工程或工具工作区。
 3. 点击左侧 `DLL Bridge`。
 4. 点击 `添加现有工程`。
@@ -57,6 +59,8 @@ E:\Unity\project\gamelib-main\gamelib\GameLib.csproj
 同步目标：
 E:\Unity\project\project-main\project\Assets\Plugins
 ```
+
+如果找不到 `project.sln`，回到 Unity 双击一个脚本，或执行 Unity 的重新生成项目文件操作。生成后再执行 `添加现有工程`。
 
 如果不走 Unity `.sln` 流程，也可以执行：
 
