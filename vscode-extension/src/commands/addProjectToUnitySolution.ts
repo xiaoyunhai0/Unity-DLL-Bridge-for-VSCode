@@ -60,8 +60,13 @@ export function registerAddProjectToUnitySolutionCommand(context: vscode.Extensi
         return;
       }
 
+      const targetPluginPath = await chooseTargetPluginPath(unityProject, projectPath, defaults);
+      if (!targetPluginPath) {
+        return;
+      }
+
       if (await solutionContainsProject(solutionPath, projectPath)) {
-        const configPath = await upsertSolutionWorkflowConfig(workspaceFolder.uri.fsPath, workspaceFolder.name, defaults, unityProject, solutionPath, projectPath);
+        const configPath = await upsertSolutionWorkflowConfig(workspaceFolder.uri.fsPath, workspaceFolder.name, defaults, unityProject, solutionPath, projectPath, targetPluginPath);
         await vscode.commands.executeCommand('unityDllBridge.refreshActionsView');
         vscode.window.showInformationMessage(`Unity 解决方案已包含 ${path.basename(projectPath)}，已写入 ${path.basename(configPath)}，现在可以直接点击“生成”。`);
         return;
@@ -87,7 +92,7 @@ export function registerAddProjectToUnitySolutionCommand(context: vscode.Extensi
         return;
       }
 
-      const configPath = await upsertSolutionWorkflowConfig(workspaceFolder.uri.fsPath, workspaceFolder.name, defaults, unityProject, solutionPath, projectPath);
+      const configPath = await upsertSolutionWorkflowConfig(workspaceFolder.uri.fsPath, workspaceFolder.name, defaults, unityProject, solutionPath, projectPath, targetPluginPath);
       await vscode.commands.executeCommand('unityDllBridge.refreshActionsView');
       vscode.window.showInformationMessage(`已添加 ${path.basename(projectPath)} 到 ${path.basename(solutionPath)}，并写入 ${path.basename(configPath)}。现在可以直接点击“生成”。`);
     } catch (error) {
@@ -236,13 +241,97 @@ async function chooseProjectPath(workspaceRoot: string, configuredProjectPath: s
   return selected?.[0]?.fsPath;
 }
 
+async function chooseTargetPluginPath(unityProject: string, projectPath: string, defaults: ConfigDefaults): Promise<string | undefined> {
+  const projectInfo = await readCsprojInfo(projectPath);
+  const assemblyName = projectInfo.assemblyName ?? path.basename(projectPath, '.csproj');
+  const existingTarget = getConfiguredTargetPluginPath(defaults, assemblyName);
+  const pluginsPath = path.join(unityProject, 'Assets', 'Plugins');
+  const runtimePath = path.join(pluginsPath, assemblyName, 'Runtime');
+  const choices = uniqueByPath([
+    existingTarget
+      ? {
+        label: '继续使用当前同步目录',
+        description: existingTarget,
+        detail: '来自 dllbridge.json',
+        path: existingTarget
+      }
+      : undefined,
+    {
+      label: '同步到 Assets/Plugins',
+      description: path.join(pluginsPath, `${assemblyName}.dll`),
+      detail: '适合 Unity 当前直接引用 Assets/Plugins/GameLib.dll 的项目',
+      path: pluginsPath
+    },
+    {
+      label: `同步到 Assets/Plugins/${assemblyName}/Runtime`,
+      description: path.join(runtimePath, `${assemblyName}.dll`),
+      detail: '隔离每个 DLL 的推荐目录',
+      path: runtimePath
+    },
+    {
+      label: '浏览选择其他 Unity 目录...',
+      description: '必须位于 Unity 工程 Assets 目录内',
+      detail: '',
+      path: ''
+    }
+  ]);
+
+  const selected = await vscode.window.showQuickPick(choices, {
+    placeHolder: '选择生成后的 DLL 同步到 Unity 的哪个目录'
+  });
+
+  if (!selected) {
+    return undefined;
+  }
+
+  if (selected.path) {
+    return selected.path;
+  }
+
+  const selectedFolder = await vscode.window.showOpenDialog({
+    title: '选择 DLL 同步到 Unity 的目标目录，建议位于 Assets/Plugins 下',
+    canSelectFiles: false,
+    canSelectFolders: true,
+    canSelectMany: false,
+    defaultUri: vscode.Uri.file(await directoryExists(pluginsPath) ? pluginsPath : path.join(unityProject, 'Assets'))
+  });
+  const targetPath = selectedFolder?.[0]?.fsPath;
+  if (!targetPath) {
+    return undefined;
+  }
+
+  const unityAssetsPath = path.join(unityProject, 'Assets');
+  if (!isInsideOrEqual(unityAssetsPath, targetPath)) {
+    const proceed = await vscode.window.showWarningMessage('所选目录不在 Unity 工程 Assets 目录内，后续校验会失败。是否重新选择？', '重新选择', '继续使用');
+    if (proceed === '重新选择') {
+      return chooseTargetPluginPath(unityProject, projectPath, defaults);
+    }
+  }
+
+  return targetPath;
+}
+
+function getConfiguredTargetPluginPath(defaults: ConfigDefaults, assemblyName: string): string | undefined {
+  const projects = Array.isArray(defaults.config?.projects) ? defaults.config.projects : [];
+  const configuredProject = projects.find((project) => {
+    return isPlainObject(project) && typeof project.assemblyName === 'string' && project.assemblyName.toLowerCase() === assemblyName.toLowerCase();
+  });
+
+  if (!isPlainObject(configuredProject) || typeof configuredProject.targetPluginPath !== 'string') {
+    return undefined;
+  }
+
+  return resolveConfigPath(defaults.configDir, configuredProject.targetPluginPath);
+}
+
 async function upsertSolutionWorkflowConfig(
   workspaceRoot: string,
   workspaceName: string,
   defaults: ConfigDefaults,
   unityProject: string,
   solutionPath: string,
-  projectPath: string
+  projectPath: string,
+  targetPluginPath: string
 ): Promise<string> {
   const configPath = defaults.configPath ?? path.join(workspaceRoot, 'dllbridge.json');
   const configDir = defaults.configPath ? defaults.configDir : workspaceRoot;
@@ -252,7 +341,7 @@ async function upsertSolutionWorkflowConfig(
   const targetFramework = projectInfo.targetFrameworks[0];
   const debugOutputDir = inferOutputDir(projectPath, 'Debug', targetFramework);
   const releaseOutputDir = inferOutputDir(projectPath, 'Release', targetFramework);
-  const projectEntry = createProjectEntry(configDir, unityProject, projectPath, assemblyName, debugOutputDir, releaseOutputDir);
+  const projectEntry = createProjectEntry(configDir, projectPath, assemblyName, debugOutputDir, releaseOutputDir, targetPluginPath);
 
   config.version = 1;
   config.name = typeof config.name === 'string' ? config.name : workspaceName;
@@ -305,18 +394,18 @@ function createBuildConfig(configDir: string, existingBuild: unknown, solutionPa
 
 function createProjectEntry(
   configDir: string,
-  unityProject: string,
   projectPath: string,
   assemblyName: string,
   debugOutputDir: string,
-  releaseOutputDir: string
+  releaseOutputDir: string,
+  targetPluginPath: string
 ): BridgeProject {
   return {
     id: toKebabCase(assemblyName),
     name: assemblyName,
     assemblyName,
     sourceProject: getRelativePath(configDir, projectPath),
-    targetPluginPath: getRelativePath(configDir, path.join(unityProject, 'Assets', 'Plugins', assemblyName, 'Runtime')),
+    targetPluginPath: getRelativePath(configDir, targetPluginPath),
     allowSourceCopy: false,
     configurations: {
       Debug: createProjectConfiguration(configDir, debugOutputDir, true, true),
@@ -488,4 +577,30 @@ async function directoryExists(directoryPath: string): Promise<boolean> {
 
 function unique<T>(values: T[]): T[] {
   return [...new Set(values)];
+}
+
+function uniqueByPath<T extends vscode.QuickPickItem & { path: string }>(values: Array<T | undefined>): T[] {
+  const seen = new Set<string>();
+  const result: T[] = [];
+
+  for (const value of values) {
+    if (!value) {
+      continue;
+    }
+
+    const key = value.path ? path.normalize(value.path).toLowerCase() : value.label;
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    result.push(value);
+  }
+
+  return result;
+}
+
+function isInsideOrEqual(parentPath: string, candidatePath: string): boolean {
+  const relative = path.relative(path.resolve(parentPath), path.resolve(candidatePath));
+  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
 }

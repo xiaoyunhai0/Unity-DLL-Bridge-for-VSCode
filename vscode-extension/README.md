@@ -66,9 +66,10 @@ Unity 解决方案
 2. 在 VSCode 中打开外部 C# 工程或工具工作区。
 3. 打开左侧 `DLL Bridge` 插件页面。
 4. 点击 `添加现有工程`，选择 Unity 生成的 `.sln`，再选择外部 `gamelib.csproj`。
-5. 添加成功后，侧边栏会在 `解决方案中的工程` 显示 `gamelib`。
-6. 点击项目里的 `生成 gamelib.dll`，或点击顶部 `生成 DLL`。
-7. 需要复制到 Unity 时，再点击 `生成并同步到 Unity`。
+5. 选择 DLL 同步目标目录。如果项目当前直接使用 `Assets/Plugins/GameLib.dll`，选择 `同步到 Assets/Plugins`；如果想隔离到子目录，可以选择 `Assets/Plugins/GameLib/Runtime` 或手动浏览。
+6. 添加成功后，侧边栏会在 `解决方案中的工程` 显示 `gamelib`。
+7. 点击项目里的 `生成 gamelib.dll`，或点击顶部 `生成 DLL`。
+8. 需要复制到 Unity 时，再点击 `生成并同步到 Unity`。
 
 这里的 `.csproj` 代表整个外部 C# 大项目，会编译该项目包含的很多 `.cs` 文件，不是只转换一个 `.cs` 文件。
 

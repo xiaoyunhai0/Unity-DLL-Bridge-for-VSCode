@@ -106,9 +106,10 @@ dotnet build gamelib.csproj -c Debug
 2. 在 VSCode 中打开外部 C# 工程或工具工作区。
 3. 打开左侧 `DLL Bridge` 页面。
 4. 点击 `添加现有工程`，选择 Unity 生成的 `.sln`，再选择外部 `gamelib.csproj`。
-5. 扩展会执行 `dotnet sln <Unity.sln> add <gamelib.csproj>`，并自动写入 `dllbridge.json`。
-6. 添加成功后，侧边栏的 `解决方案中的工程` 会显示 `gamelib`，`已配置工程` 会显示输出 DLL 路径。
-7. 点击项目里的 `生成 gamelib.dll` 或顶部 `生成 DLL`。
+5. 选择 DLL 同步目标目录。如果项目当前直接使用 `Assets/Plugins/GameLib.dll`，选择 `同步到 Assets/Plugins`；如果想隔离到子目录，可以选择 `Assets/Plugins/GameLib/Runtime` 或手动浏览。
+6. 扩展会执行 `dotnet sln <Unity.sln> add <gamelib.csproj>`，并自动写入 `dllbridge.json`。
+7. 添加成功后，侧边栏的 `解决方案中的工程` 会显示 `gamelib`，`已配置工程` 会显示输出 DLL 路径。
+8. 点击项目里的 `生成 gamelib.dll` 或顶部 `生成 DLL`。
 
 这里的 `.csproj` 代表整个外部 C# 大项目，会编译该项目包含的很多 `.cs` 文件，不是只转换一个 `.cs` 文件。
 
